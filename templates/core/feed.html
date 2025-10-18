@@ -593,6 +593,43 @@
             display: none;
         }
     }
+	
+	/* AI Assistant Styles */
+	.ai-suggestion-tag {
+		display: inline-block;
+		padding: 0.25rem 0.75rem;
+		background: rgba(99, 102, 241, 0.1);
+		color: var(--primary);
+		border-radius: 999px;
+		cursor: pointer;
+		transition: all var(--transition);
+		font-weight: 600;
+		font-size: 0.875rem;
+	}
+
+	.ai-suggestion-tag:hover {
+		background: rgba(99, 102, 241, 0.2);
+		transform: scale(1.05);
+	}
+
+	.ai-warning {
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.8;
+		}
+	}
+
+	.composer-submit:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		transform: none !important;
+	}
 </style>
 {% endblock %}
 
@@ -659,52 +696,67 @@
         {% endif %}
         
         <!-- Post Composer -->
-        <div class="post-composer">
-            <form method="post" action="{% url 'create_post' %}" enctype="multipart/form-data" id="postForm">
-                {% csrf_token %}
-                
-                <div class="composer-header">
-                    {% if user.profile.profile_picture %}
-                        <img src="{{ post.author.profile.profile_picture_url }}" alt="{{ post.author.username }}" class="post-author-avatar" loading="lazy">
-                    {% else %}
-                        <div class="composer-avatar-placeholder">{{ user.username|first|upper }}</div>
-                    {% endif %}
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</div>
-                        <div style="font-size: 0.8125rem; color: var(--text-muted);">Share your thoughts...</div>
-                    </div>
-                </div>
-                
-                <textarea name="content" class="composer-input" rows="3" placeholder="What's on your mind, {{ user.get_full_name|default:user.username }}?" required></textarea>
-                
-                <!-- Image Preview -->
-                <div class="image-preview-container" id="imagePreviewContainer">
-                    <img id="previewImage" class="preview-image" alt="Preview">
-                    <button type="button" class="remove-image-btn" onclick="removeImage()">×</button>
-                </div>
-                
-                <input type="file" id="postImage" name="image" accept="image/*" style="display: none;" onchange="previewImageFile(this)">
-                
-                <div class="composer-actions">
-                    <label for="postImage" class="composer-btn">
-                        <span>📷</span>
-                        <span>Photo</span>
-                    </label>
-                    <a href="{% url 'upload_video' %}" class="composer-btn">
-                        <span>🎬</span>
-                        <span>Video</span>
-                    </a>
-                    <a href="{% url 'create_story' %}" class="composer-btn">
-                        <span>📸</span>
-                        <span>Story</span>
-                    </a>
-                    <button type="submit" class="composer-btn composer-submit">
-                        <span>📤</span>
-                        <span>Post</span>
-                    </button>
-                </div>
-            </form>
-        </div>
+		<div class="post-composer">
+			<form method="post" action="{% url 'create_post' %}" enctype="multipart/form-data" id="postForm">
+				{% csrf_token %}
+				
+				<div class="composer-header">
+					{% if user.profile.profile_picture %}
+						<img src="{{ user.profile.profile_picture_url }}" alt="{{ user.username }}" class="composer-avatar">
+					{% else %}
+						<img src="https://ui-avatars.com/api/?name={{ user.username|urlencode }}&size=88&background=667eea&color=fff&bold=true&format=png" 
+							 alt="{{ user.username }}" 
+							 class="composer-avatar">
+					{% endif %}
+					<div style="flex: 1;">
+						<div style="font-weight: 600; color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</div>
+						<div style="font-size: 0.8125rem; color: var(--text-muted);">Share your thoughts...</div>
+					</div>
+				</div>
+				
+				<!-- AI Assistant Panel -->
+				<div id="aiAssistant" style="display: none; margin-bottom: 1rem; padding: 1rem; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border-radius: var(--radius); border-left: 4px solid var(--primary);">
+					<div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+						<span style="font-size: 1.25rem;">🤖</span>
+						<strong style="color: var(--primary);">AI Assistant</strong>
+					</div>
+					<div id="aiSuggestions"></div>
+				</div>
+				
+				<textarea name="content" id="postContent" class="composer-input" rows="3" placeholder="What's on your mind, {{ user.get_full_name|default:user.username }}?" required></textarea>
+				
+				<!-- Image Preview -->
+				<div class="image-preview-container" id="imagePreviewContainer">
+					<img id="previewImage" class="preview-image" alt="Preview">
+					<button type="button" class="remove-image-btn" onclick="removeImage()">×</button>
+					<div id="imageCaption" style="position: absolute; bottom: 1rem; left: 1rem; right: 1rem; background: rgba(0, 0, 0, 0.8); color: white; padding: 0.75rem; border-radius: var(--radius); font-size: 0.875rem; display: none;">
+						<strong>🤖 AI detected:</strong> <span id="imageCaptionText"></span>
+					</div>
+				</div>
+				
+				<input type="file" id="postImage" name="image" accept="image/*" style="display: none;" onchange="previewImageFile(this)">
+				
+				<div class="composer-actions">
+					<label for="postImage" class="composer-btn">
+						<span>📷</span>
+						<span>Photo</span>
+					</label>
+					<a href="{% url 'upload_video' %}" class="composer-btn">
+						<span>🎬</span>
+						<span>Video</span>
+					</a>
+					<a href="{% url 'create_story' %}" class="composer-btn">
+						<span>📸</span>
+						<span>Story</span>
+					</a>
+					<button type="submit" class="composer-btn composer-submit" id="submitBtn">
+						<span>📤</span>
+						<span>Post</span>
+					</button>
+				</div>
+			</form>
+		</div>
+
         
         <!-- Posts Feed -->
         <div class="posts-feed">
@@ -735,9 +787,13 @@
 					<div class="discover-item">
 						<a href="{% url 'profile' suggested_user.username %}" class="discover-avatar-link">
 							{% if suggested_user.profile.profile_picture %}
-								<img src="{{ post.author.profile.profile_picture_url }}" alt="{{ post.author.username }}" class="post-author-avatar" loading="lazy">
+								<img src="{{ suggested_user.profile.profile_picture_url }}" 
+									 alt="{{ suggested_user.username }}" 
+									 class="discover-avatar-img">
 							{% else %}
-								<div class="discover-avatar-placeholder">{{ suggested_user.username|first|upper }}</div>
+								<img src="https://ui-avatars.com/api/?name={{ suggested_user.username|urlencode }}&size=96&background=667eea&color=fff&bold=true&format=png" 
+									 alt="{{ suggested_user.username }}" 
+									 class="discover-avatar-img">
 							{% endif %}
 						</a>
 						<div class="discover-info">
@@ -850,12 +906,147 @@
 </div>
 
 <script>
+let typingTimer;
+const typingDelay = 1500; // Wait 1.5 seconds after user stops typing
+
+// AI-powered content analysis
+document.getElementById('postContent').addEventListener('input', function(e) {
+    clearTimeout(typingTimer);
+    const text = e.target.value.trim();
+    
+    if (text.length > 10) {
+        typingTimer = setTimeout(() => {
+            analyzeContent(text);
+        }, typingDelay);
+    } else {
+        hideAIAssistant();
+    }
+});
+
+async function analyzeContent(text) {
+    console.log('Analyzing text:', text.substring(0, 50) + '...');
+    
+    try {
+        const csrftoken = getCookie('csrftoken');
+        console.log('CSRF Token:', csrftoken);
+        
+        const response = await fetch('/ai/suggestions/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({ text: text })
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('AI response:', data);
+        
+        if (data.success) {
+            displayAISuggestions(data);
+        } else {
+            console.error('AI returned error:', data.error);
+        }
+    } catch (error) {
+        console.error('AI analysis error:', error);
+        // Show error in UI (optional)
+        const assistant = document.getElementById('aiAssistant');
+        const suggestions = document.getElementById('aiSuggestions');
+        suggestions.innerHTML = `
+            <div style="padding: 0.75rem; background: #fee2e2; border-radius: var(--radius); font-size: 0.875rem; color: #991b1b;">
+                <strong>⚠️ AI unavailable:</strong> ${error.message}
+            </div>
+        `;
+        assistant.style.display = 'block';
+    }
+}
+
+
+function displayAISuggestions(data) {
+    const assistant = document.getElementById('aiAssistant');
+    const suggestions = document.getElementById('aiSuggestions');
+    let html = '';
+    
+    // Sentiment Analysis
+    if (data.sentiment) {
+        const emoji = data.sentiment.label === 'POSITIVE' ? '😊' : '😐';
+        const color = data.sentiment.label === 'POSITIVE' ? '#10b981' : '#6b7280';
+        html += `
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding: 0.5rem; background: white; border-radius: var(--radius); font-size: 0.875rem;">
+                <span style="font-size: 1.25rem;">${emoji}</span>
+                <strong>Mood:</strong>
+                <span style="color: ${color}; font-weight: 600;">${data.sentiment.label}</span>
+                <span style="color: var(--text-muted);">(${Math.round(data.sentiment.score * 100)}% confident)</span>
+            </div>
+        `;
+    }
+    
+    // Toxicity Warning
+    if (data.toxicity && data.toxicity.is_toxic && data.toxicity.score > 0.7) {
+        html += `
+            <div style="padding: 0.75rem; background: #fee2e2; border-radius: var(--radius); font-size: 0.875rem; color: #991b1b; margin-bottom: 0.5rem;">
+                <strong>⚠️ Warning:</strong> This content may contain inappropriate language.
+                Consider revising before posting.
+            </div>
+        `;
+    }
+    
+    // Suggested Hashtags
+    if (data.hashtags && data.hashtags.length > 0) {
+        html += `
+            <div style="padding: 0.75rem; background: white; border-radius: var(--radius); font-size: 0.875rem; margin-bottom: 0.5rem;">
+                <strong style="color: var(--primary);">💡 Suggested hashtags:</strong>
+                <div style="margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    ${data.hashtags.map(tag => `
+                        <span onclick="addHashtag('${tag}')" style="background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 0.25rem 0.75rem; border-radius: 999px; cursor: pointer; transition: all 0.2s; font-weight: 600;" onmouseover="this.style.background='rgba(99, 102, 241, 0.2)'" onmouseout="this.style.background='rgba(99, 102, 241, 0.1)'">${tag}</span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (html) {
+        suggestions.innerHTML = html;
+        assistant.style.display = 'block';
+    } else {
+        hideAIAssistant();
+    }
+}
+
+function addHashtag(tag) {
+    const textarea = document.getElementById('postContent');
+    const currentText = textarea.value;
+    
+    // Add hashtag if not already present
+    if (!currentText.includes(tag)) {
+        textarea.value = currentText + ' ' + tag;
+        textarea.focus();
+    }
+}
+
+function hideAIAssistant() {
+    document.getElementById('aiAssistant').style.display = 'none';
+}
+
 function previewImageFile(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById('previewImage').src = e.target.result;
             document.getElementById('imagePreviewContainer').classList.add('active');
+            
+            // Generate AI caption for image (optional - can be added later)
+            // generateImageCaption(input.files[0]);
         };
         reader.readAsDataURL(input.files[0]);
     }
@@ -864,6 +1055,30 @@ function previewImageFile(input) {
 function removeImage() {
     document.getElementById('postImage').value = '';
     document.getElementById('imagePreviewContainer').classList.remove('active');
+    document.getElementById('imageCaption').style.display = 'none';
 }
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Disable submit button while AI is analyzing (optional)
+document.getElementById('postForm').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>⏳</span><span>Posting...</span>';
+});
+
 </script>
 {% endblock %}

@@ -250,126 +250,86 @@
 
 {% block content %}
 <div class="create-post-container">
-    <div class="create-post-card">
-        <div class="create-post-header">
-            {% if user.profile.profile_picture %}
-                <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="user-avatar">
-            {% else %}
-                <div class="user-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem;">
-                    {{ user.username|first|upper }}
-                </div>
-            {% endif %}
-            
-            <div class="user-info">
-                <h2>Create Post</h2>
-                <p>Share your thoughts with the world</p>
-            </div>
-        </div>
-        
-        <form method="post" enctype="multipart/form-data" id="postForm">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <textarea 
-                    name="content" 
-                    class="post-textarea" 
-                    placeholder="What's on your mind?"
-                    maxlength="5000"
-                    id="postContent"
-                    required
-                    oninput="updateCharCount()"
-                ></textarea>
-                <div class="char-counter">
-                    <span id="charCount">0</span>/5000 characters
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <div class="image-upload-area" onclick="document.getElementById('postImage').click()">
-                    <div class="upload-icon">🖼️</div>
-                    <div class="upload-text">Add an image</div>
-                    <div class="upload-hint">Click to upload (JPG, PNG, or GIF)</div>
-                </div>
-                <input type="file" id="postImage" name="image" accept="image/*" class="file-input">
-                
-                <div class="image-preview-container" id="imagePreviewContainer">
-                    <img id="imagePreview" class="image-preview" alt="Preview">
-                    <button type="button" class="remove-image-btn" onclick="removeImage()">✕</button>
-                </div>
-            </div>
-            
-            <div class="post-options">
-                <button type="button" class="option-btn" onclick="document.getElementById('postImage').click()">
-                    <span>📷</span>
-                    <span>Photo</span>
-                </button>
-                <button type="button" class="option-btn">
-                    <span>😊</span>
-                    <span>Feeling</span>
-                </button>
-                <button type="button" class="option-btn">
-                    <span>📍</span>
-                    <span>Location</span>
-                </button>
-                <button type="button" class="option-btn">
-                    <span>@</span>
-                    <span>Tag</span>
-                </button>
-            </div>
-            
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
-                    <span>📤</span>
-                    <span>Publish Post</span>
-                </button>
-                <a href="{% url 'feed' %}" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
+    <div class="ai-assistant">
+        <h3>🤖 AI Assistant</h3>
+        <div id="ai-suggestions"></div>
     </div>
+    
+    <form method="post" enctype="multipart/form-data" id="postForm">
+        {% csrf_token %}
+        
+        <textarea name="content" id="postContent" placeholder="What's on your mind?"></textarea>
+        
+        <input type="file" name="image" id="imageUpload" accept="image/*">
+        
+        <button type="submit" class="btn-submit">Post</button>
+    </form>
 </div>
 
 <script>
-    const postContent = document.getElementById('postContent');
-    const charCount = document.getElementById('charCount');
-    const submitBtn = document.getElementById('submitBtn');
-    const postImage = document.getElementById('postImage');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const imagePreview = document.getElementById('imagePreview');
+let debounceTimer;
+
+document.getElementById('postContent').addEventListener('input', function(e) {
+    clearTimeout(debounceTimer);
     
-    function updateCharCount() {
-        const count = postContent.value.length;
-        charCount.textContent = count;
-        
-        // Enable/disable submit button
-        submitBtn.disabled = count === 0;
-        
-        // Change color based on character count
-        if (count >= 4500) {
-            charCount.style.color = 'var(--danger)';
-        } else if (count >= 4000) {
-            charCount.style.color = 'var(--warning)';
-        } else {
-            charCount.style.color = 'var(--text-muted)';
+    debounceTimer = setTimeout(() => {
+        const text = e.target.value;
+        if (text.length > 10) {
+            getAISuggestions(text);
         }
+    }, 1000); // Wait 1 second after user stops typing
+});
+
+async function getAISuggestions(text) {
+    try {
+        const response = await fetch('/ai/suggestions/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ text: text })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            displaySuggestions(data);
+        }
+    } catch (error) {
+        console.error('Error getting AI suggestions:', error);
+    }
+}
+
+function displaySuggestions(data) {
+    const container = document.getElementById('ai-suggestions');
+    
+    let html = '';
+    
+    // Hashtags
+    if (data.hashtags && data.hashtags.length > 0) {
+        html += `<div class="suggestion-item">
+            <strong>Suggested hashtags:</strong> 
+            ${data.hashtags.join(' ')}
+        </div>`;
     }
     
-    // Image upload preview
-    postImage.addEventListener('change', function(e) {
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagePreview.src = e.target.result;
-                imagePreviewContainer.classList.add('active');
-            };
-            reader.readAsDataURL(this.files[0]);
-            submitBtn.disabled = false;
-        }
-    });
-    
-    function removeImage() {
-        postImage.value = '';
-        imagePreviewContainer.classList.remove('active');
-        updateCharCount();
+    // Sentiment
+    if (data.sentiment) {
+        const emoji = data.sentiment.label === 'POSITIVE' ? '😊' : '😐';
+        html += `<div class="suggestion-item">
+            <strong>Mood:</strong> ${emoji} ${data.sentiment.label}
+        </div>`;
     }
+    
+    // Toxicity warning
+    if (data.toxicity && data.toxicity.is_toxic) {
+        html += `<div class="suggestion-item warning">
+            ⚠️ This content may be inappropriate
+        </div>`;
+    }
+    
+    container.innerHTML = html;
+}
 </script>
 {% endblock %}

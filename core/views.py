@@ -11,6 +11,14 @@ from django.core.validators import validate_email
 from django.utils import timezone
 from datetime import timedelta
 import json
+from .ai_utils import (
+    generate_image_description,
+    analyze_sentiment,
+    detect_toxic_content,
+    detect_language,
+    translate_text,
+    generate_hashtags
+)
 
 from .models import (
     Profile, Post, Like, Comment, Follow, Message, Notification,
@@ -245,14 +253,45 @@ def edit_profile(request):
 
 @login_required
 def create_post(request):
-    """Create a new post"""
+    """Create a new post with AI enhancements"""
     if request.method == 'POST':
         form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
+            
+            # 🤖 AI Feature 1: Check for toxic content
+            if post.content:
+                toxicity = detect_toxic_content(post.content)
+                if toxicity['is_toxic'] and toxicity['score'] > 0.8:
+                    messages.warning(request, '⚠️ Your post may contain inappropriate content. Please review.')
+                    return render(request, 'core/create_post.html', {'form': form})
+            
+            # 🤖 AI Feature 2: Auto-generate image description
+            if 'image' in request.FILES:
+                image_file = request.FILES['image']
+                # Save temporarily to generate caption
+                post.save()  # Save first to get file path
+                
+                try:
+                    description = generate_image_description(post.image.path)
+                    if description:
+                        # Add description to post content if empty
+                        if not post.content:
+                            post.content = f"📸 {description}"
+                        messages.success(request, f'✨ AI detected: {description}')
+                except Exception as e:
+                    logger.error(f"Error generating image description: {e}")
+            
+            # 🤖 AI Feature 3: Sentiment analysis
+            if post.content:
+                sentiment = analyze_sentiment(post.content)
+                if sentiment:
+                    # Store sentiment in session for analytics
+                    request.session['last_post_sentiment'] = sentiment['label']
+            
             post.save()
-            messages.success(request, 'Post created successfully!')
+            messages.success(request, '✅ Post created successfully!')
             return redirect('feed')
     else:
         form = PostForm()

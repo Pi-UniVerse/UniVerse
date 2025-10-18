@@ -1,10 +1,17 @@
 from django.urls import path
 from . import views
 
+# Try to import AI views, but don't fail if not available
+try:
+    from . import views_ai
+    AI_VIEWS_AVAILABLE = True
+except ImportError:
+    AI_VIEWS_AVAILABLE = False
+
 urlpatterns = [
     # ========== AUTHENTICATION ==========
     path('', views.feed, name='feed'),
-    path('register/', views.register_view, name='register'),  # ← Fixed
+    path('register/', views.register_view, name='register'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     
@@ -80,3 +87,10 @@ urlpatterns = [
     path('group/<int:group_id>/member/<int:user_id>/remove/', views.remove_group_member, name='remove_group_member'),
     path('group/<int:group_id>/member/<int:user_id>/make-moderator/', views.make_moderator, name='make_moderator'),
 ]
+
+# Add AI URLs if available
+if AI_VIEWS_AVAILABLE:
+    urlpatterns += [
+        path('ai/translate/', views_ai.translate_post, name='translate_post'),
+        path('ai/suggestions/', views_ai.ai_suggestions, name='ai_suggestions'),
+    ]
