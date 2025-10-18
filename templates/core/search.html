@@ -1,5 +1,9 @@
-{% extends 'base.html' %} {% load static %} {% block title %}Search - UniVerse{%
-endblock %} {% block extra_css %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Search - UniVerse{% endblock %}
+
+{% block extra_css %}
 <style>
   .search-container {
     max-width: 900px;
@@ -69,7 +73,6 @@ endblock %} {% block extra_css %}
     box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
   }
 
-  /* Results Count */
   .results-info {
     margin-bottom: 1.5rem;
     padding: 1rem 1.5rem;
@@ -84,7 +87,6 @@ endblock %} {% block extra_css %}
     font-size: 0.9375rem;
   }
 
-  /* User Cards */
   .search-results {
     display: flex;
     flex-direction: column;
@@ -116,20 +118,6 @@ endblock %} {% block extra_css %}
     object-fit: cover;
     border: 3px solid var(--border);
     box-shadow: var(--shadow);
-    flex-shrink: 0;
-  }
-
-  .user-avatar-placeholder {
-    width: 80px;
-    height: 80px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 2rem;
     flex-shrink: 0;
   }
 
@@ -242,7 +230,6 @@ endblock %} {% block extra_css %}
     color: white;
   }
 
-  /* Empty State */
   .empty-state {
     text-align: center;
     padding: 5rem 2rem;
@@ -261,8 +248,7 @@ endblock %} {% block extra_css %}
   }
 
   @keyframes float {
-    0%,
-    100% {
+    0%, 100% {
       transform: translateY(0);
     }
     50% {
@@ -283,7 +269,6 @@ endblock %} {% block extra_css %}
     line-height: 1.6;
   }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .user-card {
       flex-direction: column;
@@ -309,7 +294,9 @@ endblock %} {% block extra_css %}
     }
   }
 </style>
-{% endblock %} {% block content %}
+{% endblock %}
+
+{% block content %}
 <div class="search-container">
   <div class="search-header">
     <h1 class="search-title">🔍 Find People</h1>
@@ -329,105 +316,81 @@ endblock %} {% block extra_css %}
     </form>
   </div>
 
-  {% if query %} {% if results %}
-  <div class="results-info">
-    <div class="results-count">
-      Found <strong>{{ results.count }}</strong> user{{ results.count|pluralize
-      }} matching "{{ query }}"
-    </div>
-  </div>
-
-  <div class="search-results">
-    {% for user_result in results %}
-    <div class="user-card">
-      {% if user_result.profile.profile_picture %}
-      <img
-        src="{{ user_result.profile.profile_picture.url }}"
-        alt="{{ user_result.username }}"
-        class="user-avatar"
-      />
-      {% else %}
-      <div class="user-avatar-placeholder">
-        {{ user_result.username|first|upper }}
+  {% if query %}
+    {% if results %}
+      <div class="results-info">
+        <div class="results-count">
+          Found <strong>{{ results.count }}</strong> user{{ results.count|pluralize }} matching "{{ query }}"
+        </div>
       </div>
-      {% endif %}
 
-      <div class="user-info">
-        <a href="{% url 'profile' user_result.username %}" class="user-name">
-          {{ user_result.get_full_name|default:user_result.username }}
-        </a>
-        <div class="user-username">@{{ user_result.username }}</div>
+      <div class="search-results">
+        {% for user_result in results %}
+        <div class="user-card">
+          {% if user_result.profile.profile_picture %}
+            <img src="{{ user_result.profile.profile_picture_url }}" alt="{{ user_result.username }}" class="user-avatar">
+          {% else %}
+            <img src="https://ui-avatars.com/api/?name={{ user_result.username|urlencode }}&size=160&background=667eea&color=fff&bold=true&format=png" 
+                 alt="{{ user_result.username }}" 
+                 class="user-avatar">
+          {% endif %}
 
-        <div class="user-stats">
-          <div class="stat-item">
-            <span>📝</span>
-            <span class="stat-number">{{ user_result.posts.count }}</span>
-            <span>posts</span>
+          <div class="user-info">
+            <a href="{% url 'profile' user_result.username %}" class="user-name">
+              {{ user_result.get_full_name|default:user_result.username }}
+            </a>
+            <div class="user-username">@{{ user_result.username }}</div>
+
+            <div class="user-stats">
+              <div class="stat-item">
+                <span>📝</span>
+                <span class="stat-number">{{ user_result.posts.count }}</span>
+                <span>posts</span>
+              </div>
+              <div class="stat-item">
+                <span>👥</span>
+                <span class="stat-number">{{ user_result.followers.count }}</span>
+                <span>followers</span>
+              </div>
+              <div class="stat-item">
+                <span>👤</span>
+                <span class="stat-number">{{ user_result.following.count }}</span>
+                <span>following</span>
+              </div>
+            </div>
+
+            {% if user_result.profile.bio %}
+              <div class="user-bio">{{ user_result.profile.bio }}</div>
+            {% endif %}
           </div>
-          <div class="stat-item">
-            <span>👥</span>
-            <span class="stat-number">{{ user_result.followers.count }}</span>
-            <span>followers</span>
-          </div>
-          <div class="stat-item">
-            <span>👤</span>
-            <span class="stat-number">{{ user_result.following.count }}</span>
-            <span>following</span>
+
+          <div class="user-actions">
+            <a href="{% url 'profile' user_result.username %}" class="btn btn-secondary">
+              <span>👤</span>
+              <span>Profile</span>
+            </a>
           </div>
         </div>
-
-        {% if user_result.profile.bio %}
-        <div class="user-bio">{{ user_result.profile.bio }}</div>
-        {% endif %}
+        {% endfor %}
       </div>
-
-      <div class="user-actions">
-        <a
-          href="{% url 'profile' user_result.username %}"
-          class="btn btn-secondary"
-        >
-          <span>👤</span>
-          <span>Profile</span>
-        </a>
-        {% if user.is_authenticated and user != user_result %} {% if user_result
-        in request.user.profile.following.all %}
-        <a
-          href="{% url 'unfollow_user' user_result.username %}"
-          class="btn btn-outline"
-        >
-          <span>✓</span>
-          <span>Following</span>
-        </a>
-        {% else %}
-        <a
-          href="{% url 'follow_user' user_result.username %}"
-          class="btn btn-primary"
-        >
-          <span>+</span>
-          <span>Follow</span>
-        </a>
-        {% endif %} {% endif %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h2 class="empty-title">No Results Found</h2>
+        <p class="empty-description">
+          We couldn't find any users matching "<strong>{{ query }}</strong>".<br />
+          Try searching with different keywords.
+        </p>
       </div>
-    </div>
-    {% endfor %}
-  </div>
+    {% endif %}
   {% else %}
-  <div class="empty-state">
-    <div class="empty-icon">🔍</div>
-    <h2 class="empty-title">No Results Found</h2>
-    <p class="empty-description">
-      We couldn't find any users matching "<strong>{{ query }}</strong>".<br />
-      Try searching with different keywords.
-    </p>
-  </div>
-  {% endif %} {% else %}
-  <div class="empty-state">
-    <div class="empty-icon">🔍</div>
-    <h2 class="empty-title">Search for Users</h2>
-    <p class="empty-description">
-      Enter a username, name, or keyword to find people on UniVerse
-    </p>
-  </div>
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h2 class="empty-title">Search for Users</h2>
+      <p class="empty-description">
+        Enter a username, name, or keyword to find people on UniVerse
+      </p>
+    </div>
   {% endif %}
 </div>
 {% endblock %}
