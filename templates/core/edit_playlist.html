@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Playlist - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-playlist-page {
+        max-width: 650px;
+        margin: 3rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    /* Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    
+    .header-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: var(--radius-xl);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+    }
+    
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 1.0625rem;
+    }
+    
+    /* Form Card */
+    .playlist-form-card {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: 3rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border);
+    }
+    
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 2.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.75rem;
+        font-size: 1.0625rem;
+    }
+    
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 1.125rem 1.5rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all var(--transition);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+    
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.08);
+    }
+    
+    .form-textarea {
+        resize: vertical;
+        min-height: 130px;
+        line-height: 1.6;
+    }
+    
+    .form-help {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-top: 0.625rem;
+        line-height: 1.5;
+    }
+    
+    /* Privacy Selector */
+    .privacy-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .privacy-option {
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .privacy-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+    
+    .privacy-card {
+        padding: 1.5rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        background: white;
+        position: relative;
+    }
+    
+    .privacy-option:hover .privacy-card {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.02);
+        transform: translateY(-2px);
+    }
+    
+    .privacy-option input:checked + .privacy-card {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.08);
+        box-shadow: 0 0 0 1px var(--primary);
+    }
+    
+    .privacy-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--bg-primary);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        transition: var(--transition);
+    }
+    
+    .privacy-option input:checked + .privacy-card .privacy-icon {
+        background: var(--primary);
+        transform: scale(1.05);
+    }
+    
+    .privacy-option input:checked + .privacy-card .privacy-icon svg {
+        color: white;
+    }
+    
+    .privacy-details {
+        flex: 1;
+    }
+    
+    .privacy-title {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+        font-size: 1rem;
+    }
+    
+    .privacy-description {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+    
+    .privacy-checkmark {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 24px;
+        height: 24px;
+        background: var(--primary);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all var(--transition);
+    }
+    
+    .privacy-option input:checked + .privacy-card .privacy-checkmark {
+        opacity: 1;
+        transform: scale(1);
+    }
+    
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 3rem;
+    }
+    
+    .btn {
+        padding: 1.125rem 2.5rem;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        font-size: 1.0625rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.625rem;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        flex: 1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--text-primary);
+    }
+    
+    .btn-danger {
+        background: var(--danger);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+    }
+    
+    /* SVG Icons */
+    svg {
+        width: 24px;
+        height: 24px;
+        color: var(--text-secondary);
+        transition: var(--transition);
+    }
+    
+    /* Responsive */
+    @media (max-width: 640px) {
+        .playlist-form-card {
+            padding: 2rem 1.5rem;
+        }
+        
+        .privacy-selector {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-playlist-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-icon">✏️</div>
+        <h1 class="page-title">Edit Playlist</h1>
+        <p class="page-subtitle">Update your playlist details</p>
+    </div>
+    
+    <!-- Form -->
+    <div class="playlist-form-card">
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Playlist Name -->
+            <div class="form-group">
+                <label for="id_title" class="form-label">Playlist Name</label>
+                <input 
+                    type="text" 
+                    name="title" 
+                    id="id_title" 
+                    class="form-input" 
+                    value="{{ form.title.value|default:'' }}"
+                    maxlength="100"
+                    required
+                    autofocus
+                >
+                <div class="form-help">Choose a descriptive name that makes it easy to find later</div>
+            </div>
+            
+            <!-- Description -->
+            <div class="form-group">
+                <label for="id_description" class="form-label">Description</label>
+                <textarea 
+                    name="description" 
+                    id="id_description" 
+                    class="form-textarea" 
+                    rows="4"
+                >{{ form.description.value|default:'' }}</textarea>
+                <div class="form-help">Optional: Tell people what makes this collection special</div>
+            </div>
+            
+            <!-- Privacy -->
+            <div class="form-group">
+                <label class="form-label">Privacy</label>
+                <div class="privacy-selector">
+                    <label class="privacy-option">
+                        <input type="radio" name="is_public" value="True" {% if playlist.is_public %}checked{% endif %}>
+                        <div class="privacy-card">
+                            <div class="privacy-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="privacy-details">
+                                <div class="privacy-title">Public</div>
+                                <div class="privacy-description">Anyone can view this playlist</div>
+                            </div>
+                            <div class="privacy-checkmark">✓</div>
+                        </div>
+                    </label>
+                    
+                    <label class="privacy-option">
+                        <input type="radio" name="is_public" value="False" {% if not playlist.is_public %}checked{% endif %}>
+                        <div class="privacy-card">
+                            <div class="privacy-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                            </div>
+                            <div class="privacy-details">
+                                <div class="privacy-title">Private</div>
+                                <div class="privacy-description">Only you can view this playlist</div>
+                            </div>
+                            <div class="privacy-checkmark">✓</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <span>💾</span>
+                    <span>Save Changes</span>
+                </button>
+                <a href="{% url 'playlist_detail' playlist.id %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+        
+        <!-- Delete Section -->
+        <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--border);">
+            <h3 style="font-weight: 700; color: var(--danger); margin-bottom: 0.5rem;">Danger Zone</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9375rem;">Once you delete a playlist, there is no going back.</p>
+            <a href="{% url 'delete_playlist' playlist.id %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this playlist? This action cannot be undone.');">
+                <span>🗑️</span>
+                <span>Delete Playlist</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

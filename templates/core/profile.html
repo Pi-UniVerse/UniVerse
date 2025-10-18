@@ -1,0 +1,630 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ profile_user.username }} - SocialHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    /* Profile Header */
+    .profile-header {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-light);
+        margin-bottom: 2rem;
+    }
+    
+    .profile-cover {
+        height: 280px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .profile-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .profile-cover::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100px;
+        background: linear-gradient(to top, rgba(0,0,0,0.3), transparent);
+    }
+    
+    .profile-info-section {
+        padding: 0 2.5rem 2.5rem;
+        position: relative;
+    }
+    
+    .profile-avatar-container {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-top: -70px;
+        margin-bottom: 1.5rem;
+    }
+    
+    .profile-avatar-wrapper {
+        position: relative;
+    }
+    
+    .profile-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: var(--radius-full);
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: var(--shadow-lg);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .profile-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .btn {
+        padding: 0.875rem 1.75rem;
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .profile-name {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    
+    .profile-username {
+        font-size: 1.125rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+    
+    .profile-bio {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+        max-width: 700px;
+    }
+    
+    .profile-meta {
+        display: flex;
+        gap: 2rem;
+        color: var(--text-secondary);
+        font-size: 0.9375rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .meta-icon {
+        font-size: 1.125rem;
+    }
+    
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        padding: 2rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-lg);
+    }
+    
+    .stat-box {
+        text-align: center;
+        text-decoration: none;
+        padding: 1rem;
+        border-radius: var(--radius);
+        transition: all var(--transition);
+    }
+    
+    .stat-box:hover {
+        background: rgba(99, 102, 241, 0.08);
+        transform: translateY(-2px);
+    }
+    
+    .stat-number {
+        display: block;
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        display: block;
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Profile Content */
+    .profile-content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    /* Tabs */
+    .profile-tabs {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: 0.875rem 1.5rem;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        border-radius: var(--radius);
+        transition: all var(--transition);
+    }
+    
+    .tab-btn:hover {
+        background: rgba(99, 102, 241, 0.08);
+        color: var(--primary);
+    }
+    
+    .tab-btn.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Post Card */
+    .post-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        padding: 1.75rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        margin-bottom: 1.5rem;
+        transition: all var(--transition);
+    }
+    
+    .post-card:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+    
+    .post-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .post-author {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+    }
+    
+    .post-author-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-full);
+        object-fit: cover;
+        border: 2px solid var(--border);
+    }
+    
+    .post-author-name {
+        font-weight: 700;
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+    
+    .post-timestamp {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+    }
+    
+    .post-content {
+        margin-bottom: 1rem;
+        line-height: 1.7;
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+    }
+    
+    .post-image {
+        width: 100%;
+        border-radius: var(--radius-md);
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow);
+    }
+    
+    .post-actions {
+        display: flex;
+        gap: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.5rem 0.75rem;
+        border-radius: var(--radius);
+        transition: all var(--transition);
+    }
+    
+    .action-btn:hover {
+        background: rgba(99, 102, 241, 0.08);
+        color: var(--primary);
+    }
+    
+    .action-btn.liked {
+        color: #ef4444;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .profile-info-section {
+            padding: 0 1.5rem 1.5rem;
+        }
+        
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .profile-stats {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+        
+        .profile-actions {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-cover">
+            {% if profile_user.profile.cover_image %}
+                <img src="{{ profile_user.profile.cover_image.url }}" alt="Cover">
+            {% endif %}
+        </div>
+        
+        <div class="profile-info-section">
+            <div class="profile-avatar-container">
+                <div class="profile-avatar-wrapper">
+                    {% if profile_user.profile.profile_picture %}
+                        <img src="{{ profile_user.profile.profile_picture.url }}" alt="{{ profile_user.username }}" class="profile-avatar">
+                    {% else %}
+                        <div class="profile-avatar" style="display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 3rem;">
+                            {{ profile_user.username|first|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="profile-actions">
+                    {% if user == profile_user %}
+                        <a href="{% url 'edit_profile' %}" class="btn btn-secondary">
+                            <span>✏️</span>
+                            <span>Edit Profile</span>
+                        </a>
+                    {% else %}
+                        {% if is_following %}
+                            <a href="{% url 'unfollow_user' profile_user.username %}" class="btn btn-secondary">
+                                <span>✓</span>
+                                <span>Following</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'follow_user' profile_user.username %}" class="btn btn-primary">
+                                <span>+</span>
+                                <span>Follow</span>
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'message_detail' profile_user.username %}" class="btn btn-secondary">
+                            <span>💬</span>
+                            <span>Message</span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
+            <div class="profile-username">@{{ profile_user.username }}</div>
+            
+            {% if profile_user.profile.bio %}
+                <p class="profile-bio">{{ profile_user.profile.bio }}</p>
+            {% endif %}
+            
+            <div class="profile-meta">
+                {% if profile_user.profile.location %}
+                <div class="meta-item">
+                    <span class="meta-icon">📍</span>
+                    <span>{{ profile_user.profile.location }}</span>
+                </div>
+                {% endif %}
+                {% if profile_user.profile.website %}
+                <div class="meta-item">
+                    <span class="meta-icon">🔗</span>
+                    <a href="{{ profile_user.profile.website }}" target="_blank" style="color: var(--primary); text-decoration: none;">{{ profile_user.profile.website }}</a>
+                </div>
+                {% endif %}
+                <div class="meta-item">
+                    <span class="meta-icon">📅</span>
+                    <span>Joined {{ profile_user.date_joined|date:"F Y" }}</span>
+                </div>
+            </div>
+            
+            <div class="profile-stats">
+                <div class="stat-box">
+                    <span class="stat-number">{{ posts.count }}</span>
+                    <span class="stat-label">Posts</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">{{ followers_count }}</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-number">{{ following_count }}</span>
+                    <span class="stat-label">Following</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profile Tabs -->
+    <div class="profile-tabs">
+        <button class="tab-btn active" onclick="showTab('posts')">📝 Posts</button>
+        <button class="tab-btn" onclick="showTab('media')">🖼️ Media</button>
+        <button class="tab-btn" onclick="showTab('about')">ℹ️ About</button>
+    </div>
+    
+    <!-- Profile Content -->
+    <div class="profile-content">
+        <!-- Posts Tab -->
+        <div id="posts" class="tab-content active">
+            {% for post in posts %}
+            <article class="post-card">
+                <div class="post-header">
+                    <div class="post-author">
+                        {% if post.author.profile.profile_picture %}
+                            <img src="{{ post.author.profile.profile_picture.url }}" alt="{{ post.author.username }}" class="post-author-avatar">
+                        {% else %}
+                            <div class="post-author-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                                {{ post.author.username|first|upper }}
+                            </div>
+                        {% endif %}
+                        
+                        <div>
+                            <div class="post-author-name">{{ post.author.get_full_name|default:post.author.username }}</div>
+                            <div class="post-timestamp">{{ post.created_at|timesince }} ago</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="post-content">{{ post.content }}</div>
+                
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" alt="Post image" class="post-image">
+                {% endif %}
+                
+                <div class="post-actions">
+                    <form method="post" action="{% url 'like_post' post.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="action-btn {% if post.id in user_liked_posts %}liked{% endif %}">
+                            <span>{% if post.id in user_liked_posts %}❤️{% else %}🤍{% endif %}</span>
+                            <span>{{ post.like_count }}</span>
+                        </button>
+                    </form>
+                    
+                    <button class="action-btn">
+                        <span>💬</span>
+                        <span>{{ post.comment_count }}</span>
+                    </button>
+                    
+                    <button class="action-btn">
+                        <span>↗️</span>
+                        <span>Share</span>
+                    </button>
+                </div>
+            </article>
+            {% empty %}
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">No posts yet</h3>
+                <p style="color: var(--text-muted);">
+                    {% if user == profile_user %}
+                        Start sharing your thoughts with the world!
+                    {% else %}
+                        {{ profile_user.username }} hasn't posted anything yet.
+                    {% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Media Tab -->
+        <div id="media" class="tab-content">
+            <div class="empty-state">
+                <div class="empty-icon">🖼️</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">No media yet</h3>
+                <p style="color: var(--text-muted);">Photos and videos will appear here</p>
+            </div>
+        </div>
+        
+        <!-- About Tab -->
+        <div id="about" class="tab-content">
+            <div class="post-card">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem;">About</h3>
+                
+                {% if profile_user.profile.bio %}
+                <div style="margin-bottom: 1.5rem;">
+                    <strong style="color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Bio</strong>
+                    <p style="margin-top: 0.5rem; color: var(--text-primary); line-height: 1.7;">{{ profile_user.profile.bio }}</p>
+                </div>
+                {% endif %}
+                
+                {% if profile_user.profile.location %}
+                <div style="margin-bottom: 1.5rem;">
+                    <strong style="color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Location</strong>
+                    <p style="margin-top: 0.5rem; color: var(--text-primary);">📍 {{ profile_user.profile.location }}</p>
+                </div>
+                {% endif %}
+                
+                {% if profile_user.profile.website %}
+                <div style="margin-bottom: 1.5rem;">
+                    <strong style="color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Website</strong>
+                    <p style="margin-top: 0.5rem;">
+                        <a href="{{ profile_user.profile.website }}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                            🔗 {{ profile_user.profile.website }}
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <strong style="color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Member Since</strong>
+                    <p style="margin-top: 0.5rem; color: var(--text-primary);">📅 {{ profile_user.date_joined|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName).classList.add('active');
+        
+        // Add active class to clicked button
+        event.target.classList.add('active');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,525 @@
+{% load static %}
+
+<article class="post-card" id="post-{{ post.id }}">
+    <!-- Post Header -->
+    <div class="post-header">
+        <a href="{% url 'profile' post.author.username %}" class="post-author">
+            {% if post.author.profile.profile_picture %}
+                <img src="{{ post.author.profile.profile_picture.url }}" alt="{{ post.author.username }}" class="author-avatar">
+            {% else %}
+                <div class="author-avatar-placeholder">{{ post.author.username|first|upper }}</div>
+            {% endif %}
+            <div class="author-info">
+                <div class="author-name">{{ post.author.get_full_name|default:post.author.username }}</div>
+                <div class="post-time">{{ post.created_at|timesince }} ago</div>
+            </div>
+        </a>
+        
+        {% if post.author == user %}
+        <div class="post-menu">
+            <button class="menu-btn" onclick="toggleMenu({{ post.id }})">⋯</button>
+            <div class="menu-dropdown" id="menu-{{ post.id }}">
+                <a href="{% url 'delete_post' post.id %}" class="menu-item" onclick="return confirm('Delete this post?')">
+                    <span>🗑️</span>
+                    <span>Delete</span>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Post Content -->
+    <div class="post-content">
+        <p class="post-text">{{ post.content }}</p>
+        
+        {% if post.image %}
+        <div class="post-image">
+            <img src="{{ post.image.url }}" alt="Post image">
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Post Stats -->
+    <div class="post-stats">
+        <div class="stat-item">
+            <span id="like-count-{{ post.id }}">{{ post.like_count }}</span> like{{ post.like_count|pluralize }}
+        </div>
+        <div class="stat-item">
+            <span id="comment-count-{{ post.id }}">{{ post.comment_count }}</span> comment{{ post.comment_count|pluralize }}
+        </div>
+    </div>
+    
+    <!-- Post Actions -->
+    <div class="post-actions">
+        <button class="action-btn {% if post.id in user_liked_posts %}liked{% endif %}" 
+                id="like-btn-{{ post.id }}" 
+                onclick="toggleLike({{ post.id }})">
+            <span class="action-icon" id="like-icon-{{ post.id }}">
+                {% if post.id in user_liked_posts %}❤️{% else %}🤍{% endif %}
+            </span>
+            <span>Like</span>
+        </button>
+        
+        <button class="action-btn" onclick="focusComment({{ post.id }})">
+            <span class="action-icon">💬</span>
+            <span>Comment</span>
+        </button>
+        
+        <button class="action-btn">
+            <span class="action-icon">🔗</span>
+            <span>Share</span>
+        </button>
+    </div>
+    
+    <!-- Comments Section -->
+    <div class="comments-section">
+        <div class="comments-list" id="comments-{{ post.id }}">
+            {% for comment in post.comments.all %}
+            <div class="comment-item">
+                <a href="{% url 'profile' comment.author.username %}" class="comment-author">
+                    {% if comment.author.profile.profile_picture %}
+                        <img src="{{ comment.author.profile.profile_picture.url }}" alt="{{ comment.author.username }}" class="comment-avatar">
+                    {% else %}
+                        <div class="comment-avatar-placeholder">{{ comment.author.username|first|upper }}</div>
+                    {% endif %}
+                </a>
+                <div class="comment-content">
+                    <div class="comment-header">
+                        <a href="{% url 'profile' comment.author.username %}" class="comment-author-name">{{ comment.author.username }}</a>
+                        <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+                    </div>
+                    <div class="comment-text">{{ comment.content }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Add Comment -->
+        <div class="add-comment">
+            {% if user.profile.profile_picture %}
+                <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="comment-input-avatar">
+            {% else %}
+                <div class="comment-input-avatar-placeholder">{{ user.username|first|upper }}</div>
+            {% endif %}
+            <form class="comment-form" onsubmit="addComment(event, {{ post.id }})">
+                {% csrf_token %}
+                <input type="text" 
+                       class="comment-input" 
+                       id="comment-input-{{ post.id }}" 
+                       placeholder="Write a comment..." 
+                       required>
+                <button type="submit" class="comment-submit">➤</button>
+            </form>
+        </div>
+    </div>
+</article>
+
+<style>
+.post-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.post-author {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+.author-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+
+.author-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.author-name {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.post-time {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.post-menu {
+    position: relative;
+}
+
+.menu-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.menu-btn:hover {
+    background: var(--bg-primary);
+}
+
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    min-width: 150px;
+    z-index: 100;
+}
+
+.menu-dropdown.active {
+    display: block;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: var(--transition);
+}
+
+.menu-item:hover {
+    background: var(--bg-primary);
+}
+
+.post-text {
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    white-space: pre-wrap;
+}
+
+.post-image {
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.post-image img {
+    width: 100%;
+    max-height: 600px;
+    object-fit: cover;
+}
+
+.post-stats {
+    display: flex;
+    gap: 1.5rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9375rem;
+    color: var(--text-muted);
+}
+
+.stat-item {
+    font-weight: 600;
+}
+
+.post-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.action-btn {
+    flex: 1;
+    padding: 0.75rem;
+    background: none;
+    border: none;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.action-btn:hover {
+    background: var(--bg-primary);
+}
+
+.action-btn.liked {
+    color: var(--danger);
+}
+
+.action-icon {
+    font-size: 1.25rem;
+}
+
+.comments-section {
+    margin-top: 1rem;
+}
+
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.comment-item {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.comment-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+
+.comment-avatar-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.comment-author-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.9375rem;
+}
+
+.comment-time {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.comment-text {
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.add-comment {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.comment-input-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+
+.comment-input-avatar-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.comment-form {
+    flex: 1;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-full);
+    font-size: 0.9375rem;
+    transition: var(--transition);
+}
+
+.comment-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.comment-submit {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: var(--primary);
+    border: none;
+    color: white;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.comment-submit:hover {
+    background: var(--primary-dark);
+    transform: scale(1.05);
+}
+</style>
+
+<script>
+function toggleMenu(postId) {
+    const menu = document.getElementById(`menu-${postId}`);
+    menu.classList.toggle('active');
+}
+
+function focusComment(postId) {
+    document.getElementById(`comment-input-${postId}`).focus();
+}
+
+// AJAX Like Toggle
+function toggleLike(postId) {
+    const likeBtn = document.getElementById(`like-btn-${postId}`);
+    const likeIcon = document.getElementById(`like-icon-${postId}`);
+    const likeCount = document.getElementById(`like-count-${postId}`);
+    
+    // Disable button temporarily
+    likeBtn.disabled = true;
+    
+    fetch(`/post/${postId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.liked) {
+            likeIcon.textContent = '❤️';
+            likeBtn.classList.add('liked');
+        } else {
+            likeIcon.textContent = '🤍';
+            likeBtn.classList.remove('liked');
+        }
+        likeCount.textContent = data.like_count;
+        likeBtn.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        likeBtn.disabled = false;
+    });
+}
+
+// AJAX Add Comment
+function addComment(event, postId) {
+    event.preventDefault();
+    
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+    
+    if (!content) return;
+    
+    fetch(`/post/${postId}/comment/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ content: content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add comment to list
+            const commentsList = document.getElementById(`comments-${postId}`);
+            const commentHTML = `
+                <div class="comment-item">
+                    <a href="/profile/${data.comment.author_username}/" class="comment-author">
+                        ${data.comment.author_avatar ? 
+                            `<img src="${data.comment.author_avatar}" alt="${data.comment.author_username}" class="comment-avatar">` :
+                            `<div class="comment-avatar-placeholder">${data.comment.author_username.charAt(0).toUpperCase()}</div>`
+                        }
+                    </a>
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <a href="/profile/${data.comment.author_username}/" class="comment-author-name">${data.comment.author_username}</a>
+                            <span class="comment-time">just now</span>
+                        </div>
+                        <div class="comment-text">${data.comment.content}</div>
+                    </div>
+                </div>
+            `;
+            commentsList.insertAdjacentHTML('beforeend', commentHTML);
+            
+            // Update comment count
+            document.getElementById(`comment-count-${postId}`).textContent = data.comment_count;
+            
+            // Clear input
+            input.value = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.post-menu')) {
+        document.querySelectorAll('.menu-dropdown').forEach(menu => {
+            menu.classList.remove('active');
+        });
+    }
+});
+</script>

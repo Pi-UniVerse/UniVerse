@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .notifications-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .notifications-header {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        margin-bottom: 2rem;
+    }
+    
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .notifications-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .mark-all-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-full);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition);
+        text-decoration: none;
+    }
+    
+    .mark-all-btn:hover {
+        background: white;
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-1px);
+    }
+    
+    .notifications-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .notification-item {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        display: flex;
+        gap: 1.25rem;
+        align-items: flex-start;
+        transition: all var(--transition);
+        position: relative;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .notification-item:hover {
+        transform: translateX(4px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .notification-item.unread {
+        background: rgba(99, 102, 241, 0.05);
+        border-color: rgba(99, 102, 241, 0.2);
+    }
+    
+    .notification-item.unread::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--primary);
+        border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    }
+    
+    .notification-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+        box-shadow: var(--shadow);
+    }
+    
+    .notification-icon.like {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    }
+    
+    .notification-icon.comment {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+    
+    .notification-icon.follow {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+    
+    .notification-icon.mention {
+        background: linear-gradient(135deg, #fa709a, #fee140);
+    }
+    
+    .notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .notification-text {
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .notification-text strong {
+        font-weight: 700;
+        color: var(--primary);
+    }
+    
+    .notification-time {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    
+    .notification-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-full);
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: var(--shadow);
+    }
+    
+    .notification-preview {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius);
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: var(--shadow);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+    }
+    
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.6;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+    
+    .empty-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+    }
+    
+    .empty-description {
+        font-size: 1rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notifications-container">
+    <div class="notifications-header">
+        <div class="header-content">
+            <h1 class="notifications-title">🔔 Notifications</h1>
+        </div>
+    </div>
+    
+    {% if notifications %}
+        <div class="notifications-list">
+            {% for notification in notifications %}
+                <a href="{{ notification.link }}" class="notification-item {% if not notification.is_read %}unread{% endif %}">
+                    {% if notification.from_user %}
+                        {% if notification.from_user.profile.profile_picture %}
+                            <img src="{{ notification.from_user.profile.profile_picture.url }}" alt="{{ notification.from_user.username }}" class="notification-avatar">
+                        {% else %}
+                            <div class="notification-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem;">
+                                {{ notification.from_user.username|first|upper }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="notification-icon {{ notification.notification_type }}">
+                            {% if notification.notification_type == 'like' %}❤️
+                            {% elif notification.notification_type == 'comment' %}💬
+                            {% elif notification.notification_type == 'follow' %}👤
+                            {% elif notification.notification_type == 'mention' %}@
+                            {% else %}🔔{% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="notification-content">
+                        <div class="notification-text">
+                            {{ notification.message|safe }}
+                        </div>
+                        <div class="notification-time">
+                            {{ notification.created_at|timesince }} ago
+                        </div>
+                    </div>
+                    
+                    {% if notification.related_post and notification.related_post.image %}
+                        <img src="{{ notification.related_post.image.url }}" alt="Post" class="notification-preview">
+                    {% endif %}
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🔔</div>
+            <h2 class="empty-title">No Notifications</h2>
+            <p class="empty-description">
+                You're all caught up! When you get notifications, they'll show up here.
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

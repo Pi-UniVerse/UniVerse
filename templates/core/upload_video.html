@@ -1,0 +1,639 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload Video - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .upload-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        padding: 2.5rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-light);
+    }
+    
+    .upload-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .upload-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9375rem;
+    }
+    
+    /* File Upload Area */
+    .file-upload-area {
+        border: 3px dashed var(--border);
+        border-radius: var(--radius-lg);
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition);
+        background: var(--bg-tertiary);
+        margin-bottom: 2rem;
+    }
+    
+    .file-upload-area:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateY(-2px);
+    }
+    
+    .file-upload-area.dragover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.1);
+        transform: scale(1.02);
+    }
+    
+    .upload-icon-large {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+    
+    .upload-text {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-hint {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    /* File Preview */
+    .file-preview {
+        display: none;
+        margin-bottom: 2rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        position: relative;
+    }
+    
+    .preview-video {
+        width: 100%;
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+        max-height: 400px;
+    }
+    
+    .file-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: white;
+        border-radius: var(--radius);
+    }
+    
+    .file-details {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .file-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--primary);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+    
+    .file-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .file-size {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+    
+    .remove-file-btn {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all var(--transition);
+    }
+    
+    .remove-file-btn:hover {
+        background: #ef4444;
+        color: white;
+    }
+    
+    /* Form Groups */
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        font-size: 0.9375rem;
+    }
+    
+    .form-input,
+    .form-textarea,
+    .form-select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 1rem;
+        transition: all var(--transition);
+        background: white;
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.6;
+    }
+    
+    .form-hint {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-top: 0.375rem;
+    }
+    
+    /* Thumbnail Upload */
+    .thumbnail-upload {
+        position: relative;
+        border: 2px dashed var(--border);
+        border-radius: var(--radius);
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition);
+        background: var(--bg-tertiary);
+    }
+    
+    .thumbnail-upload:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+    
+    .thumbnail-preview {
+        display: none;
+        position: relative;
+        margin-top: 1rem;
+    }
+    
+    .thumbnail-preview img {
+        width: 100%;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: var(--radius);
+    }
+    
+    .remove-thumbnail {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        transition: all var(--transition);
+    }
+    
+    .remove-thumbnail:hover {
+        background: #dc2626;
+        transform: scale(1.1);
+    }
+    
+    /* Form Row */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    
+    /* Checkboxes */
+    .checkbox-group {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius);
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .checkbox-item input {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: var(--primary);
+    }
+    
+    .checkbox-item label {
+        font-weight: 500;
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+    
+    /* Action Buttons */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        border: none;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-primary {
+        flex: 1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    /* Upload Progress */
+    .upload-progress {
+        display: none;
+        margin-top: 1rem;
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--border);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 0%;
+        transition: width var(--transition);
+    }
+    
+    .progress-text {
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .upload-card {
+            padding: 1.5rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card">
+        <div class="upload-header">
+            <div class="upload-icon">🎬</div>
+            <h1 class="upload-title">Upload Video</h1>
+            <p class="upload-subtitle">Share your amazing content with the world</p>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" id="uploadForm">
+            {% csrf_token %}
+            
+            <!-- File Upload Area -->
+            <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('videoFile').click()">
+                <div class="upload-icon-large">📤</div>
+                <div class="upload-text">Click to upload or drag and drop</div>
+                <div class="upload-hint">
+                    MP4, WebM, or AVI (MAX. 500MB)<br>
+                    Recommended: 1080p, 16:9 aspect ratio
+                </div>
+            </div>
+            
+            <input type="file" id="videoFile" name="video_file" accept="video/*" class="file-input" required>
+            
+            <!-- File Preview -->
+            <div class="file-preview" id="filePreview">
+                <video id="previewVideo" class="preview-video" controls></video>
+                
+                <div class="file-info">
+                    <div class="file-details">
+                        <div class="file-icon">🎥</div>
+                        <div>
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                    </div>
+                    <button type="button" class="remove-file-btn" onclick="removeFile()">
+                        ✕ Remove
+                    </button>
+                </div>
+                
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Uploading...</div>
+                </div>
+            </div>
+            
+            <!-- Video Details -->
+            <div class="form-group">
+                <label for="title" class="form-label">Title *</label>
+                <input 
+                    type="text" 
+                    id="title" 
+                    name="title" 
+                    class="form-input" 
+                    placeholder="Give your video an awesome title"
+                    required
+                    maxlength="200"
+                >
+                <span class="form-hint">A catchy title helps viewers find your video</span>
+            </div>
+            
+            <div class="form-group">
+                <label for="description" class="form-label">Description</label>
+                <textarea 
+                    id="description" 
+                    name="description" 
+                    class="form-textarea" 
+                    placeholder="Tell viewers what your video is about..."
+                ></textarea>
+                <span class="form-hint">Describe your video in detail</span>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="category" class="form-label">Category *</label>
+                    <select id="category" name="category" class="form-select" required>
+                        <option value="">Select a category</option>
+                        <option value="education">📚 Education</option>
+                        <option value="entertainment">🎭 Entertainment</option>
+                        <option value="gaming">🎮 Gaming</option>
+                        <option value="music">🎵 Music</option>
+                        <option value="news">📰 News</option>
+                        <option value="sports">⚽ Sports</option>
+                        <option value="technology">💻 Technology</option>
+                        <option value="vlogs">📹 Vlogs</option>
+                        <option value="other">🔖 Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="tags" class="form-label">Tags</label>
+                    <input 
+                        type="text" 
+                        id="tags" 
+                        name="tags" 
+                        class="form-input" 
+                        placeholder="gaming, tutorial, funny"
+                    >
+                    <span class="form-hint">Separate tags with commas</span>
+                </div>
+            </div>
+            
+            <!-- Thumbnail Upload -->
+            <div class="form-group">
+                <label class="form-label">Thumbnail</label>
+                <div class="thumbnail-upload" onclick="document.getElementById('thumbnail').click()">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🖼️</div>
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">Upload custom thumbnail</div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">JPG or PNG (Recommended: 1280x720)</div>
+                </div>
+                <input type="file" id="thumbnail" name="thumbnail" accept="image/*" class="file-input">
+                
+                <div class="thumbnail-preview" id="thumbnailPreview">
+                    <img id="thumbnailImg" src="" alt="Thumbnail">
+                    <button type="button" class="remove-thumbnail" onclick="removeThumbnail()">✕</button>
+                </div>
+            </div>
+            
+            <!-- Settings -->
+            <div class="form-group">
+                <label class="form-label">Settings</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="is_public" name="is_public" checked>
+                        <label for="is_public">Make video public</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="allow_comments" name="allow_comments" checked>
+                        <label for="allow_comments">Allow comments</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                    <span>📤</span>
+                    <span>Upload Video</span>
+                </button>
+                <a href="{% url 'videos_feed' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('videoFile');
+    const thumbnailInput = document.getElementById('thumbnail');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const filePreview = document.getElementById('filePreview');
+    const previewVideo = document.getElementById('previewVideo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const thumbnailPreview = document.getElementById('thumbnailPreview');
+    const thumbnailImg = document.getElementById('thumbnailImg');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Drag and drop
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+    });
+    
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect();
+        }
+    });
+    
+    // File input change
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    function handleFileSelect() {
+        const file = fileInput.files[0];
+        if (file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            const url = URL.createObjectURL(file);
+            previewVideo.src = url;
+            
+            fileUploadArea.style.display = 'none';
+            filePreview.style.display = 'block';
+            submitBtn.disabled = false;
+        }
+    }
+    
+    function removeFile() {
+        fileInput.value = '';
+        previewVideo.src = '';
+        fileUploadArea.style.display = 'block';
+        filePreview.style.display = 'none';
+        submitBtn.disabled = true;
+    }
+    
+    // Thumbnail handling
+    thumbnailInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                thumbnailImg.src = e.target.result;
+                thumbnailPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    function removeThumbnail() {
+        thumbnailInput.value = '';
+        thumbnailImg.src = '';
+        thumbnailPreview.style.display = 'none';
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+</script>
+{% endblock %}

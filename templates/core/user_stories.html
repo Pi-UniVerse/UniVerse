@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ story_user.username }}'s Stories - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .stories-viewer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: #000;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .story-content {
+        max-width: 500px;
+        width: 100%;
+        height: 100vh;
+        position: relative;
+        background: #000;
+    }
+    
+    .story-media {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .story-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+        z-index: 10;
+    }
+    
+    .story-progress-bars {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-bar {
+        flex: 1;
+        height: 3px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: white;
+        width: 0;
+        transition: width 0.1s linear;
+    }
+    
+    .progress-fill.active {
+        animation: progress 5s linear forwards;
+    }
+    
+    .progress-fill.completed {
+        width: 100%;
+    }
+    
+    @keyframes progress {
+        to { width: 100%; }
+    }
+    
+    .story-author-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .story-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid white;
+        object-fit: cover;
+    }
+    
+    .story-author-name {
+        color: white;
+        font-weight: 600;
+    }
+    
+    .story-time {
+        color: rgba(255,255,255,0.8);
+        font-size: 0.875rem;
+    }
+    
+    .story-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0,0,0,0.5);
+        border: none;
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+        z-index: 11;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease;
+    }
+    
+    .story-close:hover {
+        background: rgba(0,0,0,0.8);
+    }
+    
+    .story-navigation {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+    }
+    
+    .nav-area {
+        flex: 1;
+        cursor: pointer;
+    }
+    
+    .story-caption {
+        position: absolute;
+        bottom: 2rem;
+        left: 1rem;
+        right: 1rem;
+        color: white;
+        text-align: center;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        padding: 1rem;
+        background: rgba(0,0,0,0.3);
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stories-viewer">
+    <div class="story-content">
+        <button class="story-close" onclick="window.location='{% url 'stories_feed' %}'">×</button>
+        
+        <div class="story-header">
+            <div class="story-progress-bars" id="progressBars">
+                {% for story in stories %}
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-{{ forloop.counter0 }}"></div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="story-author-info">
+                {% if story_user.profile.profile_picture %}
+                    <img src="{{ story_user.profile.profile_picture.url }}" alt="{{ story_user.username }}" class="story-avatar">
+                {% else %}
+                    <div class="story-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                        {{ story_user.username|first|upper }}
+                    </div>
+                {% endif %}
+                
+                <div>
+                    <div class="story-author-name">{{ story_user.username }}</div>
+                    <div class="story-time" id="storyTime"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="storyDisplay"></div>
+        <div id="storyCaptionDisplay" class="story-caption" style="display: none;"></div>
+        
+        <div class="story-navigation">
+            <div class="nav-area" onclick="previousStory()"></div>
+            <div class="nav-area" onclick="nextStory()"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const stories = [
+        {% for story in stories %}
+        {
+            {% if story.image %}
+            image: "{{ story.image.url }}",
+            {% elif story.video %}
+            video: "{{ story.video.url }}",
+            {% endif %}
+            caption: "{{ story.caption|escapejs }}",
+            time_ago: "{{ story.created_at|timesince }} ago",
+            duration: {{ story.duration }},
+            background_color: "{{ story.background_color }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    let currentIndex = 0;
+    let storyTimer = null;
+    
+    function showStory(index) {
+        if (index < 0 || index >= stories.length) {
+            window.location = '{% url "stories_feed" %}';
+            return;
+        }
+        
+        currentIndex = index;
+        const story = stories[index];
+        const display = document.getElementById('storyDisplay');
+        const captionDisplay = document.getElementById('storyCaptionDisplay');
+        
+        // Clear previous timer
+        if (storyTimer) {
+            clearTimeout(storyTimer);
+        }
+        
+        // Update content
+        if (story.image) {
+            display.innerHTML = `<img src="${story.image}" alt="Story" class="story-media">`;
+        } else if (story.video) {
+            display.innerHTML = `<video src="${story.video}" class="story-media" autoplay loop muted></video>`;
+        } else {
+            display.innerHTML = `<div class="story-media" style="background: ${story.background_color}; display: flex; align-items: center; justify-content: center; padding: 2rem;">
+                <div style="color: white; font-size: 1.5rem; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
+                    ${story.caption}
+                </div>
+            </div>`;
+        }
+        
+        // Show caption if exists and not text-only story
+        if (story.caption && (story.image || story.video)) {
+            captionDisplay.textContent = story.caption;
+            captionDisplay.style.display = 'block';
+        } else {
+            captionDisplay.style.display = 'none';
+        }
+        
+        document.getElementById('storyTime').textContent = story.time_ago;
+        
+        // Update progress bars
+        document.querySelectorAll('.progress-fill').forEach((bar, i) => {
+            bar.classList.remove('active', 'completed');
+            if (i < index) {
+                bar.classList.add('completed');
+            } else if (i === index) {
+                bar.classList.add('active');
+                bar.style.animationDuration = `${story.duration}s`;
+            } else {
+                bar.style.width = '0';
+            }
+        });
+        
+        // Set timer for next story
+        storyTimer = setTimeout(() => nextStory(), story.duration * 1000);
+    }
+    
+    function nextStory() {
+        showStory(currentIndex + 1);
+    }
+    
+    function previousStory() {
+        if (currentIndex > 0) {
+            showStory(currentIndex - 1);
+        }
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') previousStory();
+        if (e.key === 'ArrowRight') nextStory();
+        if (e.key === 'Escape') window.location = '{% url "stories_feed" %}';
+    });
+    
+    // Start with first story
+    if (stories.length > 0) {
+        showStory(0);
+    } else {
+        window.location = '{% url "stories_feed" %}';
+    }
+</script>
+{% endblock %}

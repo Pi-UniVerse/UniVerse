@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ story.author.username }}'s Story - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Remove default page padding */
+    body {
+        padding-top: 0 !important;
+        overflow: hidden;
+    }
+    
+    /* Fullscreen story viewer */
+    .story-viewer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Story container */
+    .story-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+        height: 100vh;
+        background: #000;
+    }
+    
+    /* Progress bars */
+    .story-progress {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        gap: 4px;
+        padding: 8px 12px;
+        z-index: 10;
+    }
+    
+    .progress-bar {
+        flex: 1;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: white;
+        width: 0%;
+        transition: width linear;
+    }
+    
+    .progress-fill.active {
+        animation: progress-animation {{ story.duration }}s linear forwards;
+    }
+    
+    @keyframes progress-animation {
+        to { width: 100%; }
+    }
+    
+    /* Story header */
+    .story-header {
+        position: absolute;
+        top: 16px;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        z-index: 10;
+    }
+    
+    .story-author {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: white;
+    }
+    
+    .story-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid white;
+        object-fit: cover;
+    }
+    
+    .story-avatar-placeholder {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 2px solid white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+    }
+    
+    .story-username {
+        font-weight: 600;
+        font-size: 0.9375rem;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    }
+    
+    .story-time {
+        font-size: 0.8125rem;
+        opacity: 0.8;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    }
+    
+    .story-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.5);
+        border: none;
+        color: white;
+        font-size: 1.25rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    
+    .story-close:hover {
+        background: rgba(0, 0, 0, 0.8);
+    }
+    
+    /* Story content */
+    .story-content {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .story-media {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+    
+    .story-text {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 800;
+        color: white;
+        word-wrap: break-word;
+        line-height: 1.4;
+    }
+    
+    /* Caption */
+    .story-caption {
+        position: absolute;
+        bottom: 80px;
+        left: 0;
+        right: 0;
+        padding: 20px;
+        color: white;
+        font-size: 1rem;
+        text-align: center;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        font-weight: 600;
+    }
+    
+    /* Navigation */
+    .story-nav {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40%;
+        z-index: 5;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .story-nav:hover {
+        opacity: 1;
+    }
+    
+    .story-nav-prev {
+        left: 0;
+        background: linear-gradient(to right, rgba(0,0,0,0.3), transparent);
+    }
+    
+    .story-nav-next {
+        right: 0;
+        background: linear-gradient(to left, rgba(0,0,0,0.3), transparent);
+    }
+    
+    .nav-icon {
+        font-size: 3rem;
+        color: white;
+        opacity: 0.8;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+    
+    /* Bottom actions */
+    .story-actions {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        z-index: 10;
+    }
+    
+    .story-input {
+        flex: 1;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 24px;
+        color: white;
+        font-size: 0.9375rem;
+        backdrop-filter: blur(10px);
+    }
+    
+    .story-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .story-input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .story-action-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: white;
+        font-size: 1.25rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(10px);
+        transition: background 0.2s;
+    }
+    
+    .story-action-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Responsive */
+    @media (min-width: 768px) {
+        .story-container {
+            box-shadow: 0 0 60px rgba(0,0,0,0.5);
+        }
+    }
+    
+    @media (max-width: 500px) {
+        .story-container {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="story-viewer">
+    <div class="story-container">
+        <!-- Progress bars -->
+        <div class="story-progress">
+            {% for user_story in user_stories %}
+            <div class="progress-bar">
+                <div class="progress-fill {% if user_story.id == story.id %}active{% elif user_story.created_at < story.created_at %}{% endif %}" 
+                     style="{% if user_story.created_at < story.created_at %}width: 100%;{% endif %}"></div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Header -->
+        <div class="story-header">
+            <a href="{% url 'profile' story.author.username %}" class="story-author">
+                {% if story.author.profile.profile_picture %}
+                    <img src="{{ story.author.profile.profile_picture.url }}" alt="{{ story.author.username }}" class="story-avatar">
+                {% else %}
+                    <div class="story-avatar-placeholder">{{ story.author.username|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <div class="story-username">{{ story.author.username }}</div>
+                    <div class="story-time">{{ story.created_at|timesince }} ago</div>
+                </div>
+            </a>
+            
+            <button class="story-close" onclick="window.location='{% url 'stories_feed' %}'">✕</button>
+        </div>
+        
+        <!-- Story content -->
+        <div class="story-content">
+            {% if story.image %}
+                <img src="{{ story.image.url }}" alt="Story" class="story-media">
+            {% elif story.video %}
+                <video src="{{ story.video.url }}" class="story-media" autoplay muted loop></video>
+            {% else %}
+                <div class="story-text" style="background: {{ story.background_color }};">
+                    {{ story.caption }}
+                </div>
+            {% endif %}
+            
+            {% if story.caption and story.image or story.video %}
+                <div class="story-caption">{{ story.caption }}</div>
+            {% endif %}
+        </div>
+        
+        <!-- Navigation -->
+        {% if user_stories|length > 1 %}
+            {% for user_story in user_stories %}
+                {% if user_story.created_at < story.created_at %}
+                    <a href="{% url 'view_story' user_story.id %}" class="story-nav story-nav-prev">
+                        <div class="nav-icon">‹</div>
+                    </a>
+                {% elif user_story.created_at > story.created_at %}
+                    {% if forloop.first %}
+                        <a href="{% url 'view_story' user_story.id %}" class="story-nav story-nav-next">
+                            <div class="nav-icon">›</div>
+                        </a>
+                        {% break %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        <!-- Bottom actions -->
+        <div class="story-actions">
+            <input type="text" placeholder="Reply to {{ story.author.username }}..." class="story-input">
+            <button class="story-action-btn">❤️</button>
+            <button class="story-action-btn">📤</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-advance to next story
+    setTimeout(function() {
+        const nextStory = document.querySelector('.story-nav-next');
+        if (nextStory) {
+            nextStory.click();
+        } else {
+            // Go back to stories feed
+            window.location = '{% url 'stories_feed' %}';
+        }
+    }, {{ story.duration }}000);
+    
+    // Pause on click and hold
+    let pauseTimer;
+    const container = document.querySelector('.story-container');
+    
+    container.addEventListener('mousedown', function() {
+        document.querySelector('.progress-fill.active').style.animationPlayState = 'paused';
+    });
+    
+    container.addEventListener('mouseup', function() {
+        document.querySelector('.progress-fill.active').style.animationPlayState = 'running';
+    });
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') {
+            const prev = document.querySelector('.story-nav-prev');
+            if (prev) prev.click();
+        } else if (e.key === 'ArrowRight' || e.key === ' ') {
+            const next = document.querySelector('.story-nav-next');
+            if (next) {
+                next.click();
+            } else {
+                window.location = '{% url 'stories_feed' %}';
+            }
+        } else if (e.key === 'Escape') {
+            window.location = '{% url 'stories_feed' %}';
+        }
+    });
+</script>
+{% endblock %}

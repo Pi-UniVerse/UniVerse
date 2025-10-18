@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ playlist_user.username }}'s Playlists - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .playlists-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    /* Header */
+    .playlists-header {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .header-left {
+        flex: 1;
+    }
+    
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .user-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-full);
+        object-fit: cover;
+        border: 3px solid var(--border);
+    }
+    
+    .user-avatar-placeholder {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.75rem;
+    }
+    
+    .playlists-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .title-icon {
+        font-size: 2.5rem;
+    }
+    
+    .playlists-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9375rem;
+    }
+    
+    .create-playlist-btn {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        cursor: pointer;
+        transition: all var(--transition);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .create-playlist-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    /* Playlists Grid */
+    .playlists-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .playlist-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-light);
+        transition: all var(--transition);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .playlist-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-xl);
+    }
+    
+    .playlist-thumbnail {
+        position: relative;
+        height: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+    
+    .playlist-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .playlist-play-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: var(--transition);
+    }
+    
+    .playlist-card:hover .playlist-play-overlay {
+        opacity: 1;
+    }
+    
+    .play-icon {
+        width: 64px;
+        height: 64px;
+        background: white;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .playlist-count-badge {
+        position: absolute;
+        bottom: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-full);
+        font-size: 0.875rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .playlist-info {
+        padding: 1.5rem;
+    }
+    
+    .playlist-name {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .playlist-description {
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .playlist-meta {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 6rem 2rem;
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+    }
+    
+    .empty-icon {
+        font-size: 6rem;
+        margin-bottom: 2rem;
+        opacity: 0.7;
+    }
+    
+    .empty-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        color: var(--text-primary);
+    }
+    
+    .empty-description {
+        font-size: 1.125rem;
+        color: var(--text-muted);
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="playlists-container">
+    <!-- Header -->
+    <div class="playlists-header">
+        <div class="header-left">
+            <div class="user-info">
+                {% if playlist_user.profile.profile_picture %}
+                    <img src="{{ playlist_user.profile.profile_picture.url }}" alt="{{ playlist_user.username }}" class="user-avatar">
+                {% else %}
+                    <div class="user-avatar-placeholder">{{ playlist_user.username|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <h1 class="playlists-title">
+                        <span class="title-icon">📁</span>
+                        <span>{% if is_own_profile %}My Playlists{% else %}{{ playlist_user.username }}'s Playlists{% endif %}</span>
+                    </h1>
+                    <p class="playlists-subtitle">{% if is_own_profile %}Organize your favorite videos{% else %}Public playlists{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        {% if is_own_profile %}
+        <a href="{% url 'create_playlist' %}" class="create-playlist-btn">
+            <span>✚</span>
+            <span>New Playlist</span>
+        </a>
+        {% endif %}
+    </div>
+    
+    <!-- Playlists Grid -->
+    {% if playlists %}
+        <div class="playlists-grid">
+            {% for playlist in playlists %}
+            <a href="{% url 'playlist_detail' playlist.id %}" class="playlist-card">
+                <div class="playlist-thumbnail">
+                    {% if playlist.videos.first %}
+                        {% if playlist.videos.first.thumbnail %}
+                            <img src="{{ playlist.videos.first.thumbnail.url }}" alt="{{ playlist.title }}">
+                        {% else %}
+                            <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 3rem;">🎬</div>
+                        {% endif %}
+                    {% else %}
+                        <div style="font-size: 4rem; color: white;">📁</div>
+                    {% endif %}
+                    
+                    <div class="playlist-play-overlay">
+                        <div class="play-icon">▶</div>
+                    </div>
+                    
+                    <div class="playlist-count-badge">
+                        <span>🎬</span>
+                        <span>{{ playlist.videos.count }} video{{ playlist.videos.count|pluralize }}</span>
+                    </div>
+                </div>
+                
+                <div class="playlist-info">
+                    <h3 class="playlist-name">{{ playlist.title }}</h3>
+                    
+                    {% if playlist.description %}
+                        <p class="playlist-description">{{ playlist.description }}</p>
+                    {% endif %}
+                    
+                    <div class="playlist-meta">
+                        <div class="meta-item">
+                            <span>{% if playlist.is_public %}🌍{% else %}🔒{% endif %}</span>
+                            <span>{% if playlist.is_public %}Public{% else %}Private{% endif %}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span>📅</span>
+                            <span>{{ playlist.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📁</div>
+            <h2 class="empty-title">No {% if not is_own_profile %}Public {% endif %}Playlists</h2>
+            <p class="empty-description">
+                {% if is_own_profile %}
+                    Create your first playlist to organize your favorite videos!
+                {% else %}
+                    {{ playlist_user.username }} hasn't created any public playlists yet.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

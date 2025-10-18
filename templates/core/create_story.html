@@ -1,0 +1,766 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Story - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-story-page {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    /* Header */
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .header-icon {
+        font-size: 3rem;
+        margin-bottom: 0.75rem;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+    }
+    
+    .page-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    
+    .page-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9375rem;
+    }
+    
+    /* Story Creator Card */
+    .story-creator {
+        background: white;
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border);
+        overflow: hidden;
+    }
+    
+    /* Type Tabs */
+    .type-tabs {
+        display: flex;
+        background: var(--bg-primary);
+        border-bottom: 2px solid var(--border);
+    }
+    
+    .type-tab {
+        flex: 1;
+        padding: 1rem;
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-weight: 700;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        position: relative;
+    }
+    
+    .type-tab:hover {
+        background: rgba(99, 102, 241, 0.05);
+        color: var(--primary);
+    }
+    
+    .type-tab.active {
+        color: var(--primary);
+        background: white;
+    }
+    
+    .type-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--primary);
+    }
+    
+    .tab-icon {
+        font-size: 1.25rem;
+    }
+    
+    /* Story Content Area */
+    .story-content-area {
+        padding: 2rem;
+    }
+    
+    /* Upload Zone */
+    .upload-zone {
+        display: none;
+    }
+    
+    .upload-zone.active {
+        display: block;
+    }
+    
+    .upload-droparea {
+        position: relative;
+        border: 3px dashed var(--border);
+        border-radius: var(--radius-lg);
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition);
+        background: var(--bg-primary);
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .upload-droparea:hover,
+    .upload-droparea.dragover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+        border-style: solid;
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+    
+    .upload-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .upload-subtitle {
+        font-size: 0.9375rem;
+        color: var(--text-muted);
+        margin-bottom: 1.5rem;
+    }
+    
+    .upload-button {
+        padding: 0.875rem 2rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        cursor: pointer;
+        transition: all var(--transition);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    
+    .upload-button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+    
+    /* Preview Container */
+    .preview-container {
+        display: none;
+        position: relative;
+    }
+    
+    .preview-container.active {
+        display: block;
+    }
+    
+    .story-preview-frame {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        aspect-ratio: 9/16;
+        margin: 0 auto;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: #000;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .story-preview-frame img,
+    .story-preview-frame video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .preview-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.6) 100%);
+        pointer-events: none;
+    }
+    
+    .preview-caption {
+        position: absolute;
+        bottom: 2rem;
+        left: 1.5rem;
+        right: 1.5rem;
+        color: white;
+        font-size: 1.125rem;
+        font-weight: 700;
+        text-align: center;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    }
+    
+    .change-media-btn {
+        margin-top: 1rem;
+        padding: 0.75rem 1.5rem;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-full);
+        color: var(--text-primary);
+        font-weight: 700;
+        cursor: pointer;
+        transition: all var(--transition);
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .change-media-btn:hover {
+        background: white;
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    
+    /* Text Story Editor */
+    .text-story-editor {
+        display: none;
+    }
+    
+    .text-story-editor.active {
+        display: block;
+    }
+    
+    .text-preview-frame {
+        width: 100%;
+        max-width: 400px;
+        aspect-ratio: 9/16;
+        margin: 0 auto 2rem;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem;
+        text-align: center;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: white;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        line-height: 1.4;
+    }
+    
+    /* Color Palette */
+    .color-palette-section {
+        margin-bottom: 2rem;
+    }
+    
+    .section-label {
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        font-size: 0.9375rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .color-palette {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .color-swatch {
+        aspect-ratio: 1;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all var(--transition);
+        border: 3px solid transparent;
+        position: relative;
+    }
+    
+    .color-swatch:hover {
+        transform: scale(1.08);
+    }
+    
+    .color-swatch.active {
+        border-color: white;
+        box-shadow: 0 0 0 3px var(--primary), 0 4px 12px rgba(0,0,0,0.2);
+        transform: scale(1.08);
+    }
+    
+    .color-swatch.active::after {
+        content: '✓';
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 800;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    /* Metadata Controls */
+    .metadata-section {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 2px solid var(--border);
+    }
+    
+    .caption-input-wrapper {
+        margin-bottom: 1.5rem;
+    }
+    
+    .caption-input {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        font-size: 1rem;
+        font-family: inherit;
+        resize: none;
+        transition: all var(--transition);
+        line-height: 1.6;
+    }
+    
+    .caption-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    .caption-counter {
+        text-align: right;
+        margin-top: 0.5rem;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+    
+    .duration-control {
+        margin-bottom: 2rem;
+    }
+    
+    .duration-slider-wrapper {
+        margin-top: 0.75rem;
+        position: relative;
+    }
+    
+    .duration-slider {
+        width: 100%;
+        height: 6px;
+        border-radius: var(--radius-full);
+        background: var(--border);
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    .duration-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: var(--radius-full);
+        background: var(--primary);
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+        transition: all var(--transition);
+    }
+    
+    .duration-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.6);
+    }
+    
+    .duration-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: var(--radius-full);
+        background: var(--primary);
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    }
+    
+    .duration-value {
+        text-align: center;
+        margin-top: 0.75rem;
+        font-weight: 800;
+        font-size: 1.25rem;
+        color: var(--primary);
+    }
+    
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        flex: 1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    
+    .file-input {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-story-page">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-icon">📸</div>
+        <h1 class="page-title">Create Story</h1>
+        <p class="page-subtitle">Share a moment • Disappears in 24 hours</p>
+    </div>
+    
+    <!-- Story Creator -->
+    <div class="story-creator">
+        <!-- Type Tabs -->
+        <div class="type-tabs">
+            <button class="type-tab active" onclick="switchType('image')" data-type="image">
+                <span class="tab-icon">🖼️</span>
+                <span>Image</span>
+            </button>
+            <button class="type-tab" onclick="switchType('video')" data-type="video">
+                <span class="tab-icon">🎥</span>
+                <span>Video</span>
+            </button>
+            <button class="type-tab" onclick="switchType('text')" data-type="text">
+                <span class="tab-icon">📝</span>
+                <span>Text</span>
+            </button>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" id="storyForm">
+            {% csrf_token %}
+            
+            <!-- Story Content Area -->
+            <div class="story-content-area">
+                <!-- Image Upload -->
+                <div class="upload-zone active" id="imageZone">
+                    <div class="upload-droparea" id="imageDroparea" onclick="document.getElementById('imageFile').click()">
+                        <div class="upload-icon">📷</div>
+                        <div class="upload-title">Upload Image</div>
+                        <div class="upload-subtitle">Drag & drop or click to browse</div>
+                        <div class="upload-subtitle" style="font-size: 0.8125rem;">JPG, PNG or GIF • Max 10MB</div>
+                        <button type="button" class="upload-button">Choose Image</button>
+                    </div>
+                    <input type="file" id="imageFile" name="image" accept="image/*" class="file-input">
+                    
+                    <div class="preview-container" id="imagePreview">
+                        <div class="story-preview-frame" id="imagePreviewFrame">
+                            <div class="preview-overlay"></div>
+                            <div class="preview-caption" id="imagePreviewCaption"></div>
+                        </div>
+                        <button type="button" class="change-media-btn" onclick="changeMedia('image')">📷 Change Image</button>
+                    </div>
+                </div>
+                
+                <!-- Video Upload -->
+                <div class="upload-zone" id="videoZone">
+                    <div class="upload-droparea" id="videoDroparea" onclick="document.getElementById('videoFile').click()">
+                        <div class="upload-icon">🎬</div>
+                        <div class="upload-title">Upload Video</div>
+                        <div class="upload-subtitle">Drag & drop or click to browse</div>
+                        <div class="upload-subtitle" style="font-size: 0.8125rem;">MP4, WebM • Max 50MB • 15sec max</div>
+                        <button type="button" class="upload-button">Choose Video</button>
+                    </div>
+                    <input type="file" id="videoFile" name="video" accept="video/*" class="file-input">
+                    
+                    <div class="preview-container" id="videoPreview">
+                        <div class="story-preview-frame" id="videoPreviewFrame">
+                            <div class="preview-overlay"></div>
+                            <div class="preview-caption" id="videoPreviewCaption"></div>
+                        </div>
+                        <button type="button" class="change-media-btn" onclick="changeMedia('video')">🎬 Change Video</button>
+                    </div>
+                </div>
+                
+                <!-- Text Story -->
+                <div class="text-story-editor" id="textEditor">
+                    <div class="text-preview-frame" id="textPreview" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        Your text will appear here
+                    </div>
+                    
+                    <div class="color-palette-section">
+                        <div class="section-label">
+                            <span>🎨</span>
+                            <span>Choose Background</span>
+                        </div>
+                        <div class="color-palette">
+                            <div class="color-swatch active" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)')"></div>
+                            <div class="color-swatch" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);" onclick="selectColor(this, 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)')"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="background_color" id="backgroundColor" value="linear-gradient(135deg, #667eea 0%, #764ba2 100%)">
+                </div>
+                
+                <!-- Metadata Controls -->
+                <div class="metadata-section" id="metadataSection" style="display: none;">
+                    <!-- Caption -->
+                    <div class="caption-input-wrapper">
+                        <div class="section-label">
+                            <span>💬</span>
+                            <span>Add Caption</span>
+                        </div>
+                        <textarea id="caption" name="caption" class="caption-input" rows="3" placeholder="Write something..." maxlength="200" oninput="updateCaption()"></textarea>
+                        <div class="caption-counter"><span id="captionCount">0</span>/200</div>
+                    </div>
+                    
+                    <!-- Duration -->
+                    <div class="duration-control">
+                        <div class="section-label">
+                            <span>⏱️</span>
+                            <span>Story Duration</span>
+                        </div>
+                        <div class="duration-slider-wrapper">
+                            <input type="range" name="duration" class="duration-slider" min="3" max="15" value="5" id="durationSlider" oninput="updateDuration()">
+                        </div>
+                        <div class="duration-value"><span id="durationValue">5</span> seconds</div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn btn-primary">
+                        <span>📤</span>
+                        <span>Share Story</span>
+                    </button>
+                    <a href="{% url 'stories_feed' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentType = 'image';
+    let hasMedia = false;
+    
+    function switchType(type) {
+        currentType = type;
+        
+        // Update tabs
+        document.querySelectorAll('.type-tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelector(`[data-type="${type}"]`).classList.add('active');
+        
+        // Hide all zones
+        document.querySelectorAll('.upload-zone, .text-story-editor').forEach(zone => {
+            zone.classList.remove('active');
+        });
+        
+        // Show selected zone
+        if (type === 'image') {
+            document.getElementById('imageZone').classList.add('active');
+        } else if (type === 'video') {
+            document.getElementById('videoZone').classList.add('active');
+        } else {
+            document.getElementById('textEditor').classList.add('active');
+            document.getElementById('metadataSection').style.display = 'block';
+        }
+        
+        // Reset file inputs
+        document.getElementById('imageFile').value = '';
+        document.getElementById('videoFile').value = '';
+        hasMedia = false;
+    }
+    
+    // Image upload
+    document.getElementById('imageFile').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const frame = document.getElementById('imagePreviewFrame');
+                frame.innerHTML = `<img src="${e.target.result}" alt="Preview"><div class="preview-overlay"></div><div class="preview-caption" id="imagePreviewCaption"></div>`;
+                document.getElementById('imageDroparea').style.display = 'none';
+                document.getElementById('imagePreview').classList.add('active');
+                document.getElementById('metadataSection').style.display = 'block';
+                hasMedia = true;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    // Video upload
+    document.getElementById('videoFile').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const url = URL.createObjectURL(this.files[0]);
+            const frame = document.getElementById('videoPreviewFrame');
+            frame.innerHTML = `<video src="${url}" autoplay muted loop></video><div class="preview-overlay"></div><div class="preview-caption" id="videoPreviewCaption"></div>`;
+            document.getElementById('videoDroparea').style.display = 'none';
+            document.getElementById('videoPreview').classList.add('active');
+            document.getElementById('metadataSection').style.display = 'block';
+            hasMedia = true;
+        }
+    });
+    
+    // Drag and drop
+    ['imageDroparea', 'videoDroparea'].forEach(id => {
+        const droparea = document.getElementById(id);
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            droparea.addEventListener(eventName, preventDefaults, false);
+        });
+        droparea.addEventListener('dragenter', () => droparea.classList.add('dragover'));
+        droparea.addEventListener('dragleave', () => droparea.classList.remove('dragover'));
+        droparea.addEventListener('drop', handleDrop);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            const droparea = e.currentTarget;
+            if (droparea.id === 'imageDroparea') {
+                document.getElementById('imageFile').files = files;
+                document.getElementById('imageFile').dispatchEvent(new Event('change'));
+            } else {
+                document.getElementById('videoFile').files = files;
+                document.getElementById('videoFile').dispatchEvent(new Event('change'));
+            }
+        }
+        droparea.classList.remove('dragover');
+    }
+    
+    function changeMedia(type) {
+        if (type === 'image') {
+            document.getElementById('imageDroparea').style.display = 'flex';
+            document.getElementById('imagePreview').classList.remove('active');
+            document.getElementById('imageFile').value = '';
+        } else {
+            document.getElementById('videoDroparea').style.display = 'flex';
+            document.getElementById('videoPreview').classList.remove('active');
+            document.getElementById('videoFile').value = '';
+        }
+        document.getElementById('metadataSection').style.display = 'none';
+        hasMedia = false;
+    }
+    
+    // Color selection
+    function selectColor(element, color) {
+        document.querySelectorAll('.color-swatch').forEach(swatch => swatch.classList.remove('active'));
+        element.classList.add('active');
+        document.getElementById('backgroundColor').value = color;
+        document.getElementById('textPreview').style.background = color;
+    }
+    
+    // Caption update
+    function updateCaption() {
+        const text = document.getElementById('caption').value;
+        document.getElementById('captionCount').textContent = text.length;
+        
+        // Update preview captions
+        if (currentType === 'text') {
+            document.getElementById('textPreview').textContent = text || 'Your text will appear here';
+        } else if (currentType === 'image' && hasMedia) {
+            document.getElementById('imagePreviewCaption').textContent = text;
+        } else if (currentType === 'video' && hasMedia) {
+            document.getElementById('videoPreviewCaption').textContent = text;
+        }
+    }
+    
+    // Duration slider
+    function updateDuration() {
+        const value = document.getElementById('durationSlider').value;
+        document.getElementById('durationValue').textContent = value;
+    }
+    
+    // Form validation
+    document.getElementById('storyForm').addEventListener('submit', function(e) {
+        const hasImage = document.getElementById('imageFile').files.length > 0;
+        const hasVideo = document.getElementById('videoFile').files.length > 0;
+        const hasCaption = document.getElementById('caption').value.trim().length > 0;
+        
+        if (currentType === 'text' && !hasCaption) {
+            e.preventDefault();
+            alert('Please add text for your story');
+            document.getElementById('caption').focus();
+            return false;
+        }
+        
+        if (currentType === 'image' && !hasImage) {
+            e.preventDefault();
+            alert('Please upload an image');
+            return false;
+        }
+        
+        if (currentType === 'video' && !hasVideo) {
+            e.preventDefault();
+            alert('Please upload a video');
+            return false;
+        }
+    });
+</script>
+{% endblock %}

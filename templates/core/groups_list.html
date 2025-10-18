@@ -1,0 +1,600 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Groups - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .groups-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    /* Header */
+    .groups-header {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+        margin-bottom: 2rem;
+    }
+    
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .groups-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .title-icon {
+        font-size: 2.5rem;
+    }
+    
+    /* Floating Action Button */
+    .fab-create {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        cursor: pointer;
+        transition: all var(--transition);
+        z-index: 100;
+        text-decoration: none;
+        color: white;
+        font-size: 2rem;
+        border: none;
+    }
+    
+    .fab-create:hover {
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: 0 12px 32px rgba(99, 102, 241, 0.6);
+    }
+    
+    /* Filter Chips */
+    .groups-filters {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .filter-chip {
+        padding: 0.75rem 1.5rem;
+        background: var(--bg-tertiary);
+        border: 2px solid transparent;
+        border-radius: var(--radius-full);
+        color: var(--text-secondary);
+        font-weight: 700;
+        font-size: 0.9375rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+    
+    .filter-chip:hover {
+        background: rgba(99, 102, 241, 0.08);
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .filter-chip.active {
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        border-color: var(--primary);
+    }
+    
+    .chip-icon {
+        font-size: 1.125rem;
+    }
+    
+    /* Groups Grid */
+    .groups-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .group-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-light);
+        transition: all var(--transition);
+        text-decoration: none;
+        color: inherit;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .group-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-xl);
+    }
+    
+    .group-cover {
+        position: relative;
+        height: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        overflow: hidden;
+    }
+    
+    .group-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform var(--transition-slow);
+    }
+    
+    .group-card:hover .group-cover img {
+        transform: scale(1.08);
+    }
+    
+    /* Privacy Badge */
+    .group-privacy-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-full);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .badge-icon {
+        font-size: 1rem;
+    }
+    
+    /* Group Info */
+    .group-info {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .group-name {
+        font-size: 1.375rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.3;
+    }
+    
+    .group-creator {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .group-description {
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 1rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+    }
+    
+    /* Stats */
+    .group-stats {
+        display: flex;
+        gap: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .stat-icon {
+        font-size: 1rem;
+        color: var(--primary);
+    }
+    
+    .stat-value {
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    /* Footer */
+    .group-footer {
+        padding: 1rem 1.5rem;
+        background: var(--bg-primary);
+        border-top: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .group-category {
+        font-size: 0.8125rem;
+        color: var(--primary);
+        font-weight: 700;
+        background: rgba(99, 102, 241, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-full);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+    }
+    
+    .join-btn {
+        padding: 0.75rem 1.5rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .join-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    .joined-btn {
+        background: white;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+    
+    .joined-btn:hover {
+        background: var(--primary);
+        color: white;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-light);
+    }
+    
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.6;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+    
+    .empty-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+    }
+    
+    .empty-description {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+    }
+    
+    /* Animations */
+    .group-card {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .groups-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .groups-filters {
+            width: 100%;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        
+        .groups-filters::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .fab-create {
+            bottom: 1rem;
+            right: 1rem;
+            width: 56px;
+            height: 56px;
+            font-size: 1.75rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="groups-container">
+    <!-- Header -->
+    <div class="groups-header">
+        <div class="header-content">
+            <h1 class="groups-title">
+                <span class="title-icon">👥</span>
+                <span>Discover Groups</span>
+            </h1>
+        </div>
+        
+        <!-- Filter Chips -->
+        <div class="groups-filters">
+            <button class="filter-chip" onclick="filterGroups('my')" data-filter="my">
+                <span class="chip-icon">⭐</span>
+                <span>My Groups</span>
+            </button>
+            
+            <button class="filter-chip active" onclick="filterGroups('public')" data-filter="public">
+                <span class="chip-icon">🌍</span>
+                <span>Public</span>
+            </button>
+            
+            <button class="filter-chip" onclick="filterGroups('private')" data-filter="private">
+                <span class="chip-icon">🔒</span>
+                <span>Private</span>
+            </button>
+            
+            <button class="filter-chip" onclick="filterGroups('popular')" data-filter="popular">
+                <span class="chip-icon">🔥</span>
+                <span>Popular</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Groups Grid -->
+    {% if groups %}
+        <div class="groups-grid">
+            {% for group in groups %}
+            <article class="group-card" 
+                     data-privacy="{{ group.privacy }}" 
+                     data-is-member="{% if user in group.members.all %}true{% else %}false{% endif %}"
+                     data-member-count="{{ group.members.count }}">
+                <a href="{% url 'group_detail' group.id %}" style="text-decoration: none; color: inherit; flex: 1; display: flex; flex-direction: column;">
+                    <div class="group-cover">
+                        {% if group.cover_image %}
+                            <img src="{{ group.cover_image.url }}" alt="{{ group.name }}">
+                        {% endif %}
+                        
+                        <div class="group-privacy-badge">
+                            {% if group.privacy == 'public' %}
+                                <span class="badge-icon">🌍</span>
+                                <span>Public</span>
+                            {% elif group.privacy == 'private' %}
+                                <span class="badge-icon">🔒</span>
+                                <span>Private</span>
+                            {% else %}
+                                <span class="badge-icon">🔐</span>
+                                <span>Secret</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="group-info">
+                        <h3 class="group-name">{{ group.name }}</h3>
+                        
+                        <div class="group-creator">
+                            <span>👤</span>
+                            <span>Created by {{ group.admin.username }}</span>
+                        </div>
+                        
+                        {% if group.description %}
+                            <p class="group-description">{{ group.description }}</p>
+                        {% endif %}
+                        
+                        <div class="group-stats">
+                            <div class="stat-item">
+                                <span class="stat-icon">👥</span>
+                                <span class="stat-value">{{ group.member_count }}</span>
+                                <span>member{{ group.member_count|pluralize }}</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">📝</span>
+                                <span class="stat-value">{{ group.post_count }}</span>
+                                <span>post{{ group.post_count|pluralize }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                
+                <div class="group-footer">
+                    {% if group.category %}
+                        <div class="group-category">
+                            <span>🏷️</span>
+                            <span>{{ group.category }}</span>
+                        </div>
+                    {% else %}
+                        <div></div>
+                    {% endif %}
+                    
+                    {% if user in group.members.all %}
+                        <a href="{% url 'leave_group' group.id %}" class="join-btn joined-btn" onclick="return confirm('Leave this group?');">
+                            ✓ Joined
+                        </a>
+                    {% else %}
+                        <a href="{% url 'join_group' group.id %}" class="join-btn">
+                            + Join
+                        </a>
+                    {% endif %}
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">👥</div>
+            <h2 class="empty-title">No Groups Found</h2>
+            <p class="empty-description">
+                Be the first to create a community and bring people together around shared interests!
+            </p>
+        </div>
+    {% endif %}
+    
+    <!-- Floating Action Button -->
+    <a href="{% url 'create_group' %}" class="fab-create" title="Create Group">
+        ✚
+    </a>
+</div>
+
+<script>
+    function filterGroups(filter) {
+        // Remove active class from all chips
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.remove('active');
+        });
+        
+        // Add active class to clicked chip
+        document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+        
+        // Get all group cards
+        const groupCards = document.querySelectorAll('.group-card');
+        
+        // Filter logic
+        groupCards.forEach(card => {
+            let shouldShow = false;
+            
+            switch(filter) {
+                case 'my':
+                    shouldShow = card.dataset.isMember === 'true';
+                    break;
+                    
+                case 'public':
+                    shouldShow = card.dataset.privacy === 'public';
+                    break;
+                    
+                case 'private':
+                    shouldShow = card.dataset.privacy === 'private';
+                    break;
+                    
+                case 'popular':
+                    // Show groups with more than 5 members
+                    shouldShow = parseInt(card.dataset.memberCount) >= 5;
+                    break;
+            }
+            
+            // Show or hide the card with animation
+            if (shouldShow) {
+                card.style.display = 'flex';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 10);
+            } else {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.display = 'none';
+                }, 300);
+            }
+        });
+        
+        // Show empty state if no groups visible
+        const visibleGroups = Array.from(groupCards).filter(card => card.style.display !== 'none');
+        let emptyState = document.querySelector('.empty-state-filter');
+        
+        if (visibleGroups.length === 0) {
+            if (!emptyState) {
+                const grid = document.querySelector('.groups-grid');
+                const emptyHTML = `
+                    <div class="empty-state empty-state-filter" style="display: block; grid-column: 1 / -1;">
+                        <div class="empty-icon">👥</div>
+                        <h2 class="empty-title">No Groups Found</h2>
+                        <p class="empty-description">No groups match this filter. Try a different option.</p>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('afterend', emptyHTML);
+            } else {
+                emptyState.style.display = 'block';
+            }
+        } else {
+            if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+    }
+    
+    // Add transition styles on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.group-card').forEach(card => {
+            card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        });
+        
+        // Start with public filter
+        filterGroups('public');
+    });
+</script>
+{% endblock %}

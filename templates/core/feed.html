@@ -1,0 +1,869 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .feed-layout {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: 280px 1fr 340px;
+        gap: 1.5rem;
+    }
+    
+    /* LEFT SIDEBAR - Slim Navigation */
+    .left-sidebar {
+        position: sticky;
+        top: calc(var(--navbar-height) + 1.5rem);
+        height: fit-content;
+    }
+    
+    .sidebar-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+    
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.875rem 1rem;
+        border-radius: var(--radius);
+        text-decoration: none;
+        color: var(--text-primary);
+        font-weight: 600;
+        transition: var(--transition);
+    }
+    
+    .sidebar-link:hover {
+        background: var(--bg-primary);
+        color: var(--primary);
+    }
+    
+    .sidebar-link.active {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+    
+    .sidebar-link .icon {
+        font-size: 1.375rem;
+    }
+    
+    /* CENTER COLUMN - Main Feed */
+    .center-feed {
+        min-height: 100vh;
+    }
+    
+    /* Stories Section */
+    .stories-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+    
+    .stories-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stories-title {
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+    
+    .add-story-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: var(--transition);
+    }
+    
+    .add-story-link:hover {
+        color: var(--primary-dark);
+    }
+    
+    .stories-grid {
+        display: flex;
+        gap: 0.875rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        scrollbar-width: thin;
+    }
+    
+    .stories-grid::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .stories-grid::-webkit-scrollbar-track {
+        background: var(--bg-primary);
+        border-radius: 3px;
+    }
+    
+    .stories-grid::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+    }
+    
+    .story-item {
+        flex-shrink: 0;
+        width: 100px;
+        text-decoration: none;
+        transition: var(--transition);
+    }
+    
+    .story-item:hover {
+        transform: translateY(-4px);
+    }
+    
+    .story-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: var(--radius-lg);
+        object-fit: cover;
+        border: 3px solid var(--primary);
+        box-shadow: var(--shadow);
+    }
+    
+    .story-username {
+        font-size: 0.8125rem;
+        color: var(--text-secondary);
+        margin-top: 0.375rem;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 600;
+    }
+    
+    /* Post Composer */
+    .post-composer {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+    
+    .composer-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .composer-avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-full);
+        object-fit: cover;
+        border: 2px solid var(--border);
+    }
+    
+    .composer-avatar-placeholder {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.125rem;
+    }
+    
+    .composer-input {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        font-family: inherit;
+        font-size: 1rem;
+        resize: none;
+        transition: var(--transition);
+        min-height: 80px;
+    }
+    
+    .composer-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    .image-preview-container {
+        margin-top: 1rem;
+        position: relative;
+        display: none;
+    }
+    
+    .image-preview-container.active {
+        display: block;
+    }
+    
+    .preview-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: var(--radius);
+        background: var(--bg-primary);
+    }
+    
+    .remove-image-btn {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        width: 36px;
+        height: 36px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border: none;
+        border-radius: var(--radius-full);
+        cursor: pointer;
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+    
+    .remove-image-btn:hover {
+        background: var(--danger);
+        transform: scale(1.1);
+    }
+    
+    .composer-actions {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        align-items: center;
+    }
+    
+    .composer-btn {
+        flex: 1;
+        padding: 0.75rem;
+        background: var(--bg-primary);
+        border: 2px solid transparent;
+        border-radius: var(--radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: var(--text-primary);
+        text-decoration: none;
+        margin: 0;
+    }
+    
+    .composer-btn:hover {
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        border-color: var(--primary);
+    }
+    
+    .composer-submit {
+        flex: none;
+        padding: 0.75rem 2rem;
+        background: var(--primary);
+        color: white;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+    }
+    
+    .composer-submit:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    .composer-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+	/* Enhanced Discover Card */
+	.discover-card {
+		background: white;
+		border-radius: var(--radius-lg);
+		padding: 1.25rem;
+		box-shadow: var(--shadow);
+		border: 1px solid var(--border);
+		margin-bottom: 1.5rem;
+	}
+
+	.discover-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1rem;
+	}
+
+	.discover-title {
+		font-weight: 700;
+		font-size: 1.125rem;
+		color: var(--text-primary);
+	}
+
+	.see-all-link {
+		color: var(--primary);
+		text-decoration: none;
+		font-size: 0.875rem;
+		font-weight: 600;
+		transition: var(--transition);
+	}
+
+	.see-all-link:hover {
+		color: var(--primary-dark);
+	}
+
+	/* Suggested Users */
+	.discover-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.discover-item {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.75rem;
+		border-radius: var(--radius);
+		transition: var(--transition);
+	}
+
+	.discover-item:hover {
+		background: var(--bg-primary);
+	}
+
+	.discover-avatar-link {
+		text-decoration: none;
+		flex-shrink: 0;
+	}
+
+	.discover-avatar-img {
+		width: 48px;
+		height: 48px;
+		border-radius: var(--radius-full);
+		object-fit: cover;
+		border: 2px solid var(--border);
+	}
+
+	.discover-avatar-placeholder {
+		width: 48px;
+		height: 48px;
+		border-radius: var(--radius-full);
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: white;
+		font-weight: 700;
+		font-size: 1.125rem;
+	}
+
+	.discover-info {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.discover-name {
+		font-weight: 600;
+		font-size: 0.9375rem;
+		color: var(--text-primary);
+		text-decoration: none;
+		display: block;
+		margin-bottom: 0.125rem;
+	}
+
+	.discover-name:hover {
+		color: var(--primary);
+	}
+
+	.discover-username {
+		font-size: 0.8125rem;
+		color: var(--text-muted);
+	}
+
+	.discover-meta {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+		margin-top: 0.125rem;
+	}
+
+	.follow-btn-small {
+		padding: 0.5rem 1rem;
+		background: var(--primary);
+		color: white;
+		border: none;
+		border-radius: var(--radius-full);
+		font-weight: 600;
+		font-size: 0.8125rem;
+		cursor: pointer;
+		transition: var(--transition);
+		text-decoration: none;
+		display: inline-block;
+		white-space: nowrap;
+	}
+
+	.follow-btn-small:hover {
+		background: var(--primary-dark);
+		transform: scale(1.05);
+	}
+
+	.empty-suggestions {
+		text-align: center;
+		padding: 2rem 1rem;
+	}
+
+	.empty-icon {
+		font-size: 2.5rem;
+		margin-bottom: 0.5rem;
+		opacity: 0.5;
+	}
+
+	.empty-text {
+		font-size: 0.875rem;
+		color: var(--text-muted);
+	}
+
+	/* Quick Links Grid */
+	.quick-links-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.75rem;
+	}
+
+	.quick-link-card {
+		padding: 1.25rem;
+		border-radius: var(--radius-lg);
+		text-decoration: none;
+		color: white;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		transition: all var(--transition);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.quick-link-card:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+	}
+
+	.quick-link-icon {
+		font-size: 2rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.quick-link-name {
+		font-weight: 700;
+		font-size: 0.9375rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.quick-link-desc {
+		font-size: 0.75rem;
+		opacity: 0.9;
+	}
+
+	/* Trending */
+	.trending-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.trending-item {
+		display: flex;
+		align-items: center;
+		gap: 0.875rem;
+		padding: 0.75rem;
+		border-radius: var(--radius);
+		transition: var(--transition);
+		cursor: pointer;
+	}
+
+	.trending-item:hover {
+		background: var(--bg-primary);
+	}
+
+	.trending-rank {
+		width: 32px;
+		height: 32px;
+		background: var(--bg-primary);
+		border-radius: var(--radius);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 800;
+		font-size: 0.875rem;
+		color: var(--primary);
+		flex-shrink: 0;
+	}
+
+	.trending-info {
+		flex: 1;
+	}
+
+	.trending-topic {
+		font-weight: 700;
+		font-size: 0.9375rem;
+		color: var(--text-primary);
+		margin-bottom: 0.125rem;
+	}
+
+	.trending-count {
+		font-size: 0.8125rem;
+		color: var(--text-muted);
+	}
+
+	/* Sidebar Footer */
+	.sidebar-footer {
+		padding: 1rem;
+		text-align: center;
+	}
+
+	.footer-links {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-bottom: 0.75rem;
+		font-size: 0.8125rem;
+		color: var(--text-muted);
+	}
+
+	.footer-link {
+		color: var(--text-muted);
+		text-decoration: none;
+		transition: var(--transition);
+	}
+
+	.footer-link:hover {
+		color: var(--primary);
+	}
+
+	.footer-copyright {
+		font-size: 0.75rem;
+		color: var(--text-muted);
+	}
+
+    
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .feed-layout {
+            grid-template-columns: 1fr 340px;
+        }
+        
+        .left-sidebar {
+            display: none;
+        }
+    }
+    
+    @media (max-width: 900px) {
+        .feed-layout {
+            grid-template-columns: 1fr;
+        }
+        
+        .right-sidebar {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="feed-layout">
+    <!-- LEFT SIDEBAR -->
+    <aside class="left-sidebar">
+        <div class="sidebar-card">
+            <nav class="sidebar-nav">
+                <a href="{% url 'feed' %}" class="sidebar-link active">
+                    <span class="icon">🏠</span>
+                    <span>Home</span>
+                </a>
+                <a href="{% url 'messages_list' %}" class="sidebar-link">
+                    <span class="icon">💬</span>
+                    <span>Messages</span>
+                </a>
+                <a href="{% url 'profile' user.username %}" class="sidebar-link">
+                    <span class="icon">👤</span>
+                    <span>Profile</span>
+                </a>
+                <a href="{% url 'videos_feed' %}" class="sidebar-link">
+                    <span class="icon">🎬</span>
+                    <span>Media</span>
+                </a>
+                <a href="{% url 'my_playlists' %}" class="sidebar-link">
+                    <span class="icon">📁</span>
+                    <span>Playlists</span>
+                </a>
+                <a href="{% url 'edit_profile' %}" class="sidebar-link">
+                    <span class="icon">⚙️</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </div>
+    </aside>
+    
+    <!-- CENTER FEED -->
+    <main class="center-feed">
+        <!-- Stories -->
+        {% if story_users %}
+        <div class="stories-section">
+            <div class="stories-header">
+                <h2 class="stories-title">📸 Stories</h2>
+                <a href="{% url 'create_story' %}" class="add-story-link">+ Add Story</a>
+            </div>
+            <div class="stories-grid">
+                {% for story_user in story_users %}
+                <a href="{% url 'user_stories' story_user.username %}" class="story-item">
+                    {% if story_user.latest_story.image %}
+                        <img src="{{ story_user.latest_story.image.url }}" class="story-avatar" alt="{{ story_user.username }}">
+                    {% elif story_user.latest_story.video %}
+                        <video src="{{ story_user.latest_story.video.url }}" class="story-avatar" muted></video>
+                    {% else %}
+                        <div class="story-avatar" style="background: {{ story_user.latest_story.background_color }}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; padding: 1rem; text-align: center; font-size: 0.875rem;">
+                            {{ story_user.latest_story.caption|truncatewords:3 }}
+                        </div>
+                    {% endif %}
+                    <div class="story-username">{{ story_user.username }}</div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Post Composer -->
+        <div class="post-composer">
+            <form method="post" action="{% url 'create_post' %}" enctype="multipart/form-data" id="postForm">
+                {% csrf_token %}
+                
+                <div class="composer-header">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="composer-avatar">
+                    {% else %}
+                        <div class="composer-avatar-placeholder">{{ user.username|first|upper }}</div>
+                    {% endif %}
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--text-primary);">{{ user.get_full_name|default:user.username }}</div>
+                        <div style="font-size: 0.8125rem; color: var(--text-muted);">Share your thoughts...</div>
+                    </div>
+                </div>
+                
+                <textarea name="content" class="composer-input" rows="3" placeholder="What's on your mind, {{ user.get_full_name|default:user.username }}?" required></textarea>
+                
+                <!-- Image Preview -->
+                <div class="image-preview-container" id="imagePreviewContainer">
+                    <img id="previewImage" class="preview-image" alt="Preview">
+                    <button type="button" class="remove-image-btn" onclick="removeImage()">×</button>
+                </div>
+                
+                <input type="file" id="postImage" name="image" accept="image/*" style="display: none;" onchange="previewImageFile(this)">
+                
+                <div class="composer-actions">
+                    <label for="postImage" class="composer-btn">
+                        <span>📷</span>
+                        <span>Photo</span>
+                    </label>
+                    <a href="{% url 'upload_video' %}" class="composer-btn">
+                        <span>🎬</span>
+                        <span>Video</span>
+                    </a>
+                    <a href="{% url 'create_story' %}" class="composer-btn">
+                        <span>📸</span>
+                        <span>Story</span>
+                    </a>
+                    <button type="submit" class="composer-btn composer-submit">
+                        <span>📤</span>
+                        <span>Post</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Posts Feed -->
+        <div class="posts-feed">
+            {% for post in posts %}
+                {% include 'core/post_card.html' %}
+            {% empty %}
+                <div style="text-align: center; padding: 4rem 2rem; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow);">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;">📝</div>
+                    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">No Posts Yet</h3>
+                    <p style="color: var(--text-muted);">Be the first to share something!</p>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+    
+	<!-- RIGHT SIDEBAR - Discover -->
+	<aside class="right-sidebar">
+		<!-- Suggested Users -->
+		<div class="discover-card">
+			<div class="discover-header">
+				<h3 class="discover-title">👤 Suggested For You</h3>
+				<a href="{% url 'search_users' %}" class="see-all-link">See all</a>
+			</div>
+			
+			<div class="discover-list">
+				{% if suggested_users %}
+					{% for suggested_user in suggested_users|slice:":3" %}
+					<div class="discover-item">
+						<a href="{% url 'profile' suggested_user.username %}" class="discover-avatar-link">
+							{% if suggested_user.profile.profile_picture %}
+								<img src="{{ suggested_user.profile.profile_picture.url }}" alt="{{ suggested_user.username }}" class="discover-avatar-img">
+							{% else %}
+								<div class="discover-avatar-placeholder">{{ suggested_user.username|first|upper }}</div>
+							{% endif %}
+						</a>
+						<div class="discover-info">
+							<a href="{% url 'profile' suggested_user.username %}" class="discover-name">{{ suggested_user.get_full_name|default:suggested_user.username }}</a>
+							<div class="discover-username">@{{ suggested_user.username }}</div>
+							<div class="discover-meta">{{ suggested_user.followers.count }} followers</div>
+						</div>
+						<a href="{% url 'follow_user' suggested_user.username %}" class="follow-btn-small">Follow</a>
+					</div>
+					{% endfor %}
+				{% else %}
+					<div class="empty-suggestions">
+						<div class="empty-icon">👥</div>
+						<div class="empty-text">Follow more people to get suggestions!</div>
+					</div>
+				{% endif %}
+			</div>
+		</div>
+		
+		<!-- Quick Links -->
+		<div class="discover-card">
+			<div class="discover-header">
+				<h3 class="discover-title">🚀 Explore</h3>
+			</div>
+			
+			<div class="quick-links-grid">
+				<a href="{% url 'videos_feed' %}" class="quick-link-card" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+					<div class="quick-link-icon">🎬</div>
+					<div class="quick-link-name">Videos</div>
+					<div class="quick-link-desc">Watch & share</div>
+				</a>
+				
+				<a href="{% url 'groups_list' %}" class="quick-link-card" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+					<div class="quick-link-icon">👥</div>
+					<div class="quick-link-name">Groups</div>
+					<div class="quick-link-desc">Join communities</div>
+				</a>
+				
+				<a href="{% url 'stories_feed' %}" class="quick-link-card" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
+					<div class="quick-link-icon">📸</div>
+					<div class="quick-link-name">Stories</div>
+					<div class="quick-link-desc">Share moments</div>
+				</a>
+				
+				<a href="{% url 'my_playlists' %}" class="quick-link-card" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
+					<div class="quick-link-icon">📁</div>
+					<div class="quick-link-name">Playlists</div>
+					<div class="quick-link-desc">Organize videos</div>
+				</a>
+			</div>
+		</div>
+		
+		<!-- Trending -->
+		<div class="discover-card">
+			<div class="discover-header">
+				<h3 class="discover-title">🔥 Trending</h3>
+			</div>
+			
+			<div class="trending-list">
+				<div class="trending-item">
+					<div class="trending-rank">#1</div>
+					<div class="trending-info">
+						<div class="trending-topic">#TechNews</div>
+						<div class="trending-count">1,234 posts</div>
+					</div>
+				</div>
+				
+				<div class="trending-item">
+					<div class="trending-rank">#2</div>
+					<div class="trending-info">
+						<div class="trending-topic">#Photography</div>
+						<div class="trending-count">892 posts</div>
+					</div>
+				</div>
+				
+				<div class="trending-item">
+					<div class="trending-rank">#3</div>
+					<div class="trending-info">
+						<div class="trending-topic">#Travel</div>
+						<div class="trending-count">756 posts</div>
+					</div>
+				</div>
+				
+				<div class="trending-item">
+					<div class="trending-rank">#4</div>
+					<div class="trending-info">
+						<div class="trending-topic">#Gaming</div>
+						<div class="trending-count">623 posts</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!-- Footer Links -->
+		<div class="sidebar-footer">
+			<div class="footer-links">
+				<a href="#" class="footer-link">About</a>
+				<span>•</span>
+				<a href="#" class="footer-link">Help</a>
+				<span>•</span>
+				<a href="#" class="footer-link">Privacy</a>
+				<span>•</span>
+				<a href="#" class="footer-link">Terms</a>
+			</div>
+			<div class="footer-copyright">
+				© 2025 UniVerse 
+			</div>
+		</div>
+	</aside>
+</div>
+
+<script>
+function previewImageFile(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImage').src = e.target.result;
+            document.getElementById('imagePreviewContainer').classList.add('active');
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function removeImage() {
+    document.getElementById('postImage').value = '';
+    document.getElementById('imagePreviewContainer').classList.remove('active');
+}
+</script>
+{% endblock %}

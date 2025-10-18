@@ -1,0 +1,577 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ group.name }} - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .group-page {
+        max-width: 1200px;
+        margin: 2rem auto;
+    }
+    
+    .group-header {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    
+    .group-cover {
+        width: 100%;
+        height: 250px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: relative;
+    }
+    
+    .group-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .group-info-section {
+        padding: 2rem;
+    }
+    
+    .group-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+    }
+    
+    .group-title-content h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .group-meta {
+        display: flex;
+        gap: 2rem;
+        color: var(--text-secondary);
+        font-size: 0.9375rem;
+    }
+    
+    .group-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .group-description {
+        padding: 1.5rem;
+        background: var(--surface-hover);
+        border-radius: 0.75rem;
+        line-height: 1.7;
+        margin-bottom: 1.5rem;
+    }
+    
+    .group-tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid var(--border);
+        margin-bottom: 2rem;
+    }
+    
+    .group-tab {
+        padding: 1rem 1.5rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        color: var(--text-secondary);
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s ease;
+        position: relative;
+        bottom: -2px;
+    }
+    
+    .group-tab:hover {
+        color: var(--primary);
+    }
+    
+    .group-tab.active {
+        color: var(--primary);
+        border-bottom-color: var(--primary);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .create-post-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+    }
+    
+    .post-input-area {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--border);
+    }
+    
+    .post-input-link {
+        flex: 1;
+        padding: 1rem 1.25rem;
+        background: var(--background);
+        border-radius: 2rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.9375rem;
+        display: block;
+    }
+    
+    .post-input-link:hover {
+        background: var(--border);
+        color: var(--text-primary);
+    }
+    
+    .group-post {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        box-shadow: var(--shadow);
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .group-post:hover {
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .group-post.pinned {
+        border: 2px solid var(--primary);
+        background: rgba(99, 102, 241, 0.03);
+    }
+    
+    .pinned-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.375rem 0.875rem;
+        border-radius: 1rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .post-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .post-author-info {
+        display: flex;
+        gap: 0.875rem;
+        align-items: center;
+    }
+    
+    .post-author-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+    
+    .post-author-name:hover {
+        color: var(--primary);
+    }
+    
+    .post-date {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+    
+    .post-content {
+        margin-bottom: 1rem;
+        line-height: 1.7;
+        color: var(--text-primary);
+    }
+    
+    .post-image {
+        width: 100%;
+        border-radius: 0.875rem;
+        margin-bottom: 1rem;
+        max-height: 500px;
+        object-fit: cover;
+    }
+    
+    .post-actions {
+        display: flex;
+        gap: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        color: var(--text-secondary);
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .action-btn:hover {
+        color: var(--primary);
+    }
+    
+    .comment-form {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.75rem;
+    }
+    
+    .comment-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 2px solid var(--border);
+        border-radius: 2rem;
+        background: white;
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9375rem;
+        transition: all 0.2s ease;
+    }
+    
+    .comment-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        font-family: 'Inter', sans-serif;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 2px 8px 0 rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px 0 rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-small {
+        padding: 0.5rem 1rem;
+        font-size: 0.8125rem;
+    }
+    
+    .btn-secondary {
+        background: var(--background);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--border);
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px 0 rgba(239, 68, 68, 0.4);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-secondary);
+    }
+    
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .about-section {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        box-shadow: var(--shadow);
+    }
+    
+    .about-item {
+        margin-bottom: 1.5rem;
+    }
+    
+    .about-item h3 {
+        font-size: 0.9375rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-secondary);
+    }
+    
+    .about-item p {
+        color: var(--text-primary);
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="group-page">
+    <div class="group-header">
+        <div class="group-cover">
+            {% if group.cover_image %}
+                <img src="{{ group.cover_image.url }}" alt="{{ group.name }}">
+            {% endif %}
+        </div>
+        
+        <div class="group-info-section">
+            <div class="group-title-row">
+                <div class="group-title-content">
+                    <h1>{{ group.name }}</h1>
+                    <div class="group-meta">
+                        <span>
+                            {% if group.privacy == 'public' %}🌍 Public Group
+                            {% elif group.privacy == 'private' %}🔒 Private Group
+                            {% else %}🔐 Secret Group{% endif %}
+                        </span>
+                        <span>👥 {{ group.member_count }} member{{ group.member_count|pluralize }}</span>
+                        <span>📝 {{ group.post_count }} post{{ group.post_count|pluralize }}</span>
+                    </div>
+                </div>
+                
+                <div class="group-actions">
+                    {% if is_member %}
+                        <a href="{% url 'leave_group' group.id %}" class="btn btn-secondary">Leave Group</a>
+                    {% else %}
+                        <a href="{% url 'join_group' group.id %}" class="btn btn-primary">
+                            {% if group.privacy == 'public' %}Join Group
+                            {% else %}Request to Join{% endif %}
+                        </a>
+                    {% endif %}
+                    
+                    {% if is_admin %}
+                        <a href="{% url 'edit_group' group.id %}" class="btn btn-secondary">⚙️ Settings</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="group-description">
+                {{ group.description }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="group-tabs">
+        <button class="group-tab active" onclick="showGroupTab('posts')">📝 Posts</button>
+        <button class="group-tab" onclick="showGroupTab('about')">ℹ️ About</button>
+        <button class="group-tab" onclick="showGroupTab('members')">👥 Members</button>
+    </div>
+    
+    <!-- Posts Tab -->
+    <div id="posts" class="tab-content active">
+        {% if is_member %}
+            <div class="create-post-card">
+                <div class="post-input-area">
+                    {% if user.profile.profile_picture %}
+                        <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="avatar">
+                    {% else %}
+                        <div class="avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                            {{ user.username|first|upper }}
+                        </div>
+                    {% endif %}
+                    <a href="{% url 'create_group_post' group.id %}" class="post-input-link">
+                        Share something with the group...
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% for post in posts %}
+            <div class="group-post {% if post.is_pinned %}pinned{% endif %}">
+                {% if post.is_pinned %}
+                    <div class="pinned-badge">📌 Pinned Post</div>
+                {% endif %}
+                
+                <div class="post-header">
+                    <div class="post-author-info">
+                        {% if post.author.profile.profile_picture %}
+                            <img src="{{ post.author.profile.profile_picture.url }}" alt="{{ post.author.username }}" class="avatar" style="width: 40px; height: 40px;">
+                        {% else %}
+                            <div class="avatar" style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.875rem;">
+                                {{ post.author.username|first|upper }}
+                            </div>
+                        {% endif %}
+                        
+                        <div>
+                            <a href="{% url 'profile' post.author.username %}" class="post-author-name">
+                                {{ post.author.get_full_name|default:post.author.username }}
+                            </a>
+                            <div class="post-date">{{ post.created_at|timesince }} ago</div>
+                        </div>
+                    </div>
+                    
+                    {% if post.author == user or is_moderator %}
+                        <a href="{% url 'delete_group_post' post.id %}" class="btn btn-danger btn-small" onclick="return confirm('Delete this post?');">Delete</a>
+                    {% endif %}
+                </div>
+                
+                <p class="post-content">{{ post.content }}</p>
+                
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" alt="Post" class="post-image">
+                {% endif %}
+                
+                <div class="post-actions">
+                    <a href="{% url 'like_group_post' post.id %}" class="action-btn">
+                        <span>❤️</span>
+                        <span>{{ post.like_count }} Like{{ post.like_count|pluralize }}</span>
+                    </a>
+                    <span class="action-btn">
+                        <span>💬</span>
+                        <span>{{ post.comment_count }} Comment{{ post.comment_count|pluralize }}</span>
+                    </span>
+                </div>
+                
+                {% if is_member %}
+                    <form method="post" action="{% url 'add_group_comment' post.id %}" class="comment-form">
+                        {% csrf_token %}
+                        <input type="text" name="content" placeholder="Add a comment..." class="comment-input" required>
+                        <button type="submit" class="btn btn-primary btn-small">Post</button>
+                    </form>
+                {% endif %}
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <div class="empty-icon">📭</div>
+                <h3>No posts yet</h3>
+                <p>Be the first to share something with the group!</p>
+                {% if is_member %}
+                    <a href="{% url 'create_group_post' group.id %}" class="btn btn-primary" style="margin-top: 1rem;">Create Post</a>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- About Tab -->
+    <div id="about" class="tab-content">
+        <div class="about-section">
+            <div class="about-item">
+                <h3>Description</h3>
+                <p>{{ group.description }}</p>
+            </div>
+            
+            {% if group.rules %}
+                <div class="about-item">
+                    <h3>Group Rules</h3>
+                    <p style="white-space: pre-wrap;">{{ group.rules }}</p>
+                </div>
+            {% endif %}
+            
+            {% if group.category %}
+                <div class="about-item">
+                    <h3>Category</h3>
+                    <p>{{ group.category }}</p>
+                </div>
+            {% endif %}
+            
+            <div class="about-item">
+                <h3>Privacy</h3>
+                <p>
+                    {% if group.privacy == 'public' %}
+                        🌍 Public - Anyone can see the group and its posts
+                    {% elif group.privacy == 'private' %}
+                        🔒 Private - Only members can see posts
+                    {% else %}
+                        🔐 Secret - Only members can find and see the group
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="about-item">
+                <h3>Admin</h3>
+                <p>
+                    <a href="{% url 'profile' group.admin.username %}" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                        {{ group.admin.get_full_name|default:group.admin.username }}
+                    </a>
+                </p>
+            </div>
+            
+            <div class="about-item">
+                <h3>Created</h3>
+                <p>{{ group.created_at|date:"F d, Y" }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Members Tab -->
+    <div id="members" class="tab-content">
+        <div class="about-section">
+            <h3 style="margin-bottom: 1.5rem;">Group Members ({{ group.member_count }})</h3>
+            <a href="{% url 'group_members' group.id %}" class="btn btn-primary">View All Members</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showGroupTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.group-tab').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        document.getElementById(tabName).classList.add('active');
+        
+        // Add active class to clicked button
+        event.target.classList.add('active');
+    }
+</script>
+{% endblock %}

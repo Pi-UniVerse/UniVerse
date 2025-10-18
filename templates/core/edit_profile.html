@@ -1,0 +1,443 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-profile-container {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .edit-profile-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-light);
+        overflow: hidden;
+    }
+    
+    .edit-profile-header {
+        padding: 2rem;
+        text-align: center;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .edit-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    
+    .edit-title {
+        font-size: 2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+    }
+    
+    .edit-subtitle {
+        color: var(--text-muted);
+        font-size: 0.9375rem;
+    }
+    
+    .edit-profile-body {
+        padding: 2.5rem;
+    }
+    
+    /* Cover & Avatar Upload */
+    .profile-images-section {
+        margin-bottom: 3rem;
+    }
+    
+    .cover-upload {
+        position: relative;
+        height: 200px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: -60px;
+        cursor: pointer;
+        transition: all var(--transition);
+    }
+    
+    .cover-upload:hover {
+        transform: scale(1.01);
+    }
+    
+    .cover-upload img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .cover-upload-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity var(--transition);
+    }
+    
+    .cover-upload:hover .cover-upload-overlay {
+        opacity: 1;
+    }
+    
+    .upload-icon {
+        font-size: 2.5rem;
+        color: white;
+    }
+    
+    .avatar-upload-container {
+        display: flex;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .avatar-upload {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        border-radius: var(--radius-full);
+        border: 5px solid white;
+        box-shadow: var(--shadow-xl);
+        cursor: pointer;
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .avatar-upload img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-upload-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity var(--transition);
+    }
+    
+    .avatar-upload:hover .avatar-upload-overlay {
+        opacity: 1;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    /* Form */
+    .form-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid var(--border);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        font-size: 0.9375rem;
+    }
+    
+    .form-input,
+    .form-textarea {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 1rem;
+        transition: all var(--transition);
+        background: white;
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .form-input:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    .form-textarea {
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.6;
+    }
+    
+    .form-hint {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-top: 0.375rem;
+    }
+    
+    .char-counter {
+        text-align: right;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+    }
+    
+    /* Form Actions */
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        flex: 1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .edit-profile-body {
+            padding: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-profile-container">
+    <div class="edit-profile-card">
+        <div class="edit-profile-header">
+            <div class="edit-icon">✏️</div>
+            <h1 class="edit-title">Edit Profile</h1>
+            <p class="edit-subtitle">Update your personal information and preferences</p>
+        </div>
+        
+        <div class="edit-profile-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <!-- Profile Images -->
+                <div class="profile-images-section">
+                    <!-- Cover Image -->
+                    <div class="cover-upload" onclick="document.getElementById('coverImage').click()">
+                        {% if user.profile.cover_image %}
+                            <img src="{{ user.profile.cover_image.url }}" alt="Cover" id="coverPreview">
+                        {% endif %}
+                        <div class="cover-upload-overlay">
+                            <div class="upload-icon">📷</div>
+                        </div>
+                    </div>
+                    <input type="file" id="coverImage" name="cover_image" accept="image/*" class="file-input">
+                    
+                    <!-- Profile Picture -->
+                    <div class="avatar-upload-container">
+                        <div class="avatar-upload" onclick="document.getElementById('profilePicture').click()">
+                            {% if user.profile.profile_picture %}
+                                <img src="{{ user.profile.profile_picture.url }}" alt="Avatar" id="avatarPreview">
+                            {% else %}
+                                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 3rem;">
+                                    {{ user.username|first|upper }}
+                                </div>
+                            {% endif %}
+                            <div class="avatar-upload-overlay">
+                                <div class="upload-icon" style="font-size: 2rem;">📷</div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="file" id="profilePicture" name="profile_picture" accept="image/*" class="file-input">
+                </div>
+                
+                <!-- Personal Information -->
+                <div class="form-section">
+                    <h2 class="section-title">Personal Information</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" id="first_name" name="first_name" class="form-input" value="{{ user.first_name }}" placeholder="John">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" class="form-input" value="{{ user.last_name }}" placeholder="Doe">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" name="email" class="form-input" value="{{ user.email }}" placeholder="john@example.com" required>
+                        <span class="form-hint">Your email will not be visible to others</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bio" class="form-label">Bio</label>
+                        <textarea id="bio" name="bio" class="form-textarea" placeholder="Tell us about yourself..." maxlength="500" oninput="updateCharCount('bio', 'bioCount', 500)">{{ user.profile.bio }}</textarea>
+                        <div class="char-counter"><span id="bioCount">{{ user.profile.bio|length|default:0 }}</span>/500</div>
+                    </div>
+                </div>
+                
+                <!-- Additional Information -->
+                <div class="form-section">
+                    <h2 class="section-title">Additional Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" id="location" name="location" class="form-input" value="{{ user.profile.location }}" placeholder="New York, USA">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="website" class="form-label">Website</label>
+                        <input type="url" id="website" name="website" class="form-input" value="{{ user.profile.website }}" placeholder="https://yourwebsite.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="birth_date" class="form-label">Birth Date</label>
+                        <input type="date" id="birth_date" name="birth_date" class="form-input" value="{{ user.profile.birth_date|date:'Y-m-d' }}">
+                        <span class="form-hint">Your age will be visible but not your birth date</span>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span>💾</span>
+                        <span>Save Changes</span>
+                    </button>
+                    <a href="{% url 'profile' user.username %}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cover image preview
+    document.getElementById('coverImage').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let preview = document.getElementById('coverPreview');
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'coverPreview';
+                    document.querySelector('.cover-upload').insertBefore(preview, document.querySelector('.cover-upload-overlay'));
+                }
+                preview.src = e.target.result;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    // Profile picture preview
+    document.getElementById('profilePicture').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                let preview = document.getElementById('avatarPreview');
+                if (!preview) {
+                    preview = document.createElement('img');
+                    preview.id = 'avatarPreview';
+                    document.querySelector('.avatar-upload').insertBefore(preview, document.querySelector('.avatar-upload-overlay'));
+                }
+                preview.src = e.target.result;
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+    
+    // Character counter
+    function updateCharCount(inputId, counterId, maxLength) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+        counter.textContent = input.value.length;
+        
+        if (input.value.length >= maxLength) {
+            counter.style.color = 'var(--danger)';
+        } else {
+            counter.style.color = 'var(--text-muted)';
+        }
+    }
+</script>
+{% endblock %}

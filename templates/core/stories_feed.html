@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Stories - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .stories-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1.5rem;
+    }
+    
+    /* Header */
+    .stories-header {
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .stories-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    
+    /* Floating Action Button */
+    .fab-create {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+        cursor: pointer;
+        transition: all var(--transition);
+        z-index: 100;
+        text-decoration: none;
+        color: white;
+        font-size: 1.75rem;
+    }
+    
+    .fab-create:hover {
+        transform: scale(1.1) rotate(90deg);
+        box-shadow: 0 12px 32px rgba(99, 102, 241, 0.6);
+    }
+    
+    /* Stories Carousel Container */
+    .stories-carousel-container {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        position: relative;
+    }
+    
+    /* Carousel */
+    .stories-carousel {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        padding: 0.5rem 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .stories-carousel::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Story Item */
+    .story-item {
+        flex-shrink: 0;
+        width: 120px;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        transition: transform var(--transition);
+    }
+    
+    .story-item:hover {
+        transform: translateY(-4px);
+    }
+    
+    /* Story Thumbnail */
+    .story-thumbnail {
+        position: relative;
+        width: 120px;
+        height: 180px;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Gradient Ring for Unviewed */
+    .story-ring {
+        position: absolute;
+        inset: -3px;
+        border-radius: var(--radius-lg);
+        padding: 3px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%, #f093fb 100%);
+        z-index: 1;
+    }
+    
+    .story-ring-inner {
+        width: 100%;
+        height: 100%;
+        border-radius: calc(var(--radius-lg) - 3px);
+        overflow: hidden;
+        background: white;
+    }
+    
+    /* Viewed Story (Gray Ring) */
+    .story-item.viewed .story-ring {
+        background: var(--border);
+    }
+    
+    .story-thumbnail img,
+    .story-thumbnail video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: relative;
+        z-index: 2;
+    }
+    
+    /* Create Story Item */
+    .create-story-item {
+        position: relative;
+    }
+    
+    .create-story-item .story-thumbnail {
+        background: var(--bg-primary);
+        border: 2px dashed var(--border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all var(--transition);
+    }
+    
+    .create-story-item:hover .story-thumbnail {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+    }
+    
+    .create-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+    
+    .create-text {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+    
+    /* Story Avatar Overlay */
+    .story-avatar-overlay {
+        position: absolute;
+        top: 0.75rem;
+        left: 0.75rem;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-full);
+        border: 3px solid white;
+        z-index: 3;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+    
+    .story-avatar-overlay img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .story-avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1rem;
+    }
+    
+    /* Story Username */
+    .story-username {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 0.25rem;
+    }
+    
+    .create-story-item .story-username {
+        color: var(--primary);
+    }
+    
+    /* Story Count Badge */
+    .story-count-badge {
+        position: absolute;
+        bottom: 0.75rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 0.25rem 0.625rem;
+        border-radius: var(--radius-full);
+        font-size: 0.75rem;
+        font-weight: 700;
+        z-index: 3;
+    }
+    
+    /* Navigation Arrows */
+    .carousel-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-full);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all var(--transition);
+        z-index: 10;
+        box-shadow: var(--shadow);
+    }
+    
+    .carousel-nav:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .carousel-nav-prev {
+        left: -20px;
+    }
+    
+    .carousel-nav-next {
+        right: -20px;
+    }
+    
+    .stories-carousel-container:hover .carousel-nav {
+        display: flex;
+    }
+    
+    /* Empty State */
+    .empty-stories {
+        text-align: center;
+        padding: 5rem 2rem;
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+    }
+    
+    .empty-icon {
+        font-size: 5rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.6;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+    
+    .empty-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.75rem;
+        color: var(--text-primary);
+    }
+    
+    .empty-description {
+        font-size: 1rem;
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+    
+    .create-first-btn {
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        cursor: pointer;
+        transition: all var(--transition);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .create-first-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stories-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .story-item {
+            width: 100px;
+        }
+        
+        .story-thumbnail {
+            width: 100px;
+            height: 150px;
+        }
+        
+        .fab-create {
+            bottom: 1rem;
+            right: 1rem;
+            width: 56px;
+            height: 56px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stories-page">
+    <!-- Header -->
+    <div class="stories-header">
+        <h1 class="stories-title">📸 Stories</h1>
+    </div>
+    
+    {% if story_users %}
+    <!-- Stories Carousel -->
+    <div class="stories-carousel-container">
+        <!-- Navigation Arrows -->
+        <button class="carousel-nav carousel-nav-prev" onclick="scrollCarousel('prev')">❮</button>
+        <button class="carousel-nav carousel-nav-next" onclick="scrollCarousel('next')">❯</button>
+        
+        <div class="stories-carousel" id="storiesCarousel">
+            <!-- Create Story Item (Your Avatar) -->
+            <a href="{% url 'create_story' %}" class="story-item create-story-item">
+                <div class="story-thumbnail">
+                    <div class="create-icon">✚</div>
+                    <div class="create-text">Create</div>
+                </div>
+                <div class="story-username">Your Story</div>
+            </a>
+            
+            <!-- Friends' Stories -->
+            {% for story_user in story_users %}
+                {% if story_user != user %}
+                <a href="{% url 'user_stories' story_user.username %}" class="story-item">
+                    <div class="story-thumbnail">
+                        <!-- Gradient Ring -->
+                        <div class="story-ring">
+                            <div class="story-ring-inner">
+                                {% if story_user.latest_story.image %}
+                                    <img src="{{ story_user.latest_story.image.url }}" alt="{{ story_user.username }}">
+                                {% elif story_user.latest_story.video %}
+                                    <video src="{{ story_user.latest_story.video.url }}" muted></video>
+                                {% else %}
+                                    <div style="width: 100%; height: 100%; background: {{ story_user.latest_story.background_color }}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; padding: 1rem; text-align: center; font-size: 0.875rem;">
+                                        {{ story_user.latest_story.caption }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Avatar Overlay -->
+                        <div class="story-avatar-overlay">
+                            {% if story_user.profile.profile_picture %}
+                                <img src="{{ story_user.profile.profile_picture.url }}" alt="{{ story_user.username }}">
+                            {% else %}
+                                <div class="story-avatar-placeholder">{{ story_user.username|first|upper }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Story Count -->
+                        {% if story_user.story_count > 1 %}
+                            <div class="story-count-badge">{{ story_user.story_count }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="story-username">{{ story_user.username }}</div>
+                </a>
+                {% endif %}
+            {% endfor %}
+            
+            <!-- Your Own Stories -->
+            {% for story_user in story_users %}
+                {% if story_user == user %}
+                <a href="{% url 'user_stories' story_user.username %}" class="story-item">
+                    <div class="story-thumbnail">
+                        <div class="story-ring">
+                            <div class="story-ring-inner">
+                                {% if story_user.latest_story.image %}
+                                    <img src="{{ story_user.latest_story.image.url }}" alt="Your Story">
+                                {% elif story_user.latest_story.video %}
+                                    <video src="{{ story_user.latest_story.video.url }}" muted></video>
+                                {% else %}
+                                    <div style="width: 100%; height: 100%; background: {{ story_user.latest_story.background_color }}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; padding: 1rem; text-align: center; font-size: 0.875rem;">
+                                        {{ story_user.latest_story.caption }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="story-avatar-overlay">
+                            {% if user.profile.profile_picture %}
+                                <img src="{{ user.profile.profile_picture.url }}" alt="You">
+                            {% else %}
+                                <div class="story-avatar-placeholder">{{ user.username|first|upper }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if story_user.story_count > 1 %}
+                            <div class="story-count-badge">{{ story_user.story_count }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="story-username">My Story</div>
+                </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-stories">
+        <div class="empty-icon">📸</div>
+        <h2 class="empty-title">No Stories Yet</h2>
+        <p class="empty-description">
+            Be the first to share a moment!<br>
+            Stories disappear after 24 hours.
+        </p>
+        <a href="{% url 'create_story' %}" class="create-first-btn">
+            <span>✚</span>
+            <span>Create Your First Story</span>
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Floating Action Button -->
+    <a href="{% url 'create_story' %}" class="fab-create" title="Create Story">
+        ✚
+    </a>
+</div>
+
+<script>
+    function scrollCarousel(direction) {
+        const carousel = document.getElementById('storiesCarousel');
+        const scrollAmount = 300;
+        
+        if (direction === 'prev') {
+            carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+        } else {
+            carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') {
+            scrollCarousel('prev');
+        } else if (e.key === 'ArrowRight') {
+            scrollCarousel('next');
+        }
+    });
+</script>
+{% endblock %}

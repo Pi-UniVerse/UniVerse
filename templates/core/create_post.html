@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Post - UniVerse {% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-post-container {
+        max-width: 700px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .create-post-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-radius: var(--radius-xl);
+        padding: 2.5rem;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-light);
+    }
+    
+    .create-post-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .user-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: var(--radius-full);
+        object-fit: cover;
+        border: 3px solid var(--border);
+        box-shadow: var(--shadow);
+    }
+    
+    .user-info h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+    
+    .user-info p {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .post-textarea {
+        width: 100%;
+        min-height: 200px;
+        padding: 1.25rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-lg);
+        font-size: 1.125rem;
+        line-height: 1.7;
+        transition: all var(--transition);
+        background: white;
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        resize: vertical;
+    }
+    
+    .post-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    .post-textarea::placeholder {
+        color: var(--text-muted);
+    }
+    
+    .char-counter {
+        text-align: right;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-top: 0.5rem;
+    }
+    
+    .image-upload-area {
+        border: 3px dashed var(--border);
+        border-radius: var(--radius-lg);
+        padding: 2.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition);
+        background: var(--bg-tertiary);
+    }
+    
+    .image-upload-area:hover {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.05);
+        transform: translateY(-2px);
+    }
+    
+    .upload-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.6;
+    }
+    
+    .upload-text {
+        font-weight: 700;
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-primary);
+    }
+    
+    .upload-hint {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+    
+    .file-input {
+        display: none;
+    }
+    
+    .image-preview-container {
+        display: none;
+        position: relative;
+        margin-top: 1.5rem;
+    }
+    
+    .image-preview-container.active {
+        display: block;
+    }
+    
+    .image-preview {
+        width: 100%;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .remove-image-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-full);
+        border: none;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        font-size: 1.25rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        box-shadow: var(--shadow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .remove-image-btn:hover {
+        background: #dc2626;
+        transform: scale(1.1);
+    }
+    
+    .post-options {
+        display: flex;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: var(--bg-tertiary);
+        border-radius: var(--radius-lg);
+        margin-bottom: 1.5rem;
+    }
+    
+    .option-btn {
+        flex: 1;
+        padding: 0.875rem;
+        background: white;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+    
+    .option-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: var(--radius-full);
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all var(--transition);
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        flex: 1;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+    
+    .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+        background: var(--bg-tertiary);
+        color: var(--text-primary);
+        border: 2px solid var(--border);
+    }
+    
+    .btn-secondary:hover {
+        background: white;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-post-container">
+    <div class="create-post-card">
+        <div class="create-post-header">
+            {% if user.profile.profile_picture %}
+                <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="user-avatar">
+            {% else %}
+                <div class="user-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.5rem;">
+                    {{ user.username|first|upper }}
+                </div>
+            {% endif %}
+            
+            <div class="user-info">
+                <h2>Create Post</h2>
+                <p>Share your thoughts with the world</p>
+            </div>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data" id="postForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <textarea 
+                    name="content" 
+                    class="post-textarea" 
+                    placeholder="What's on your mind?"
+                    maxlength="5000"
+                    id="postContent"
+                    required
+                    oninput="updateCharCount()"
+                ></textarea>
+                <div class="char-counter">
+                    <span id="charCount">0</span>/5000 characters
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="image-upload-area" onclick="document.getElementById('postImage').click()">
+                    <div class="upload-icon">🖼️</div>
+                    <div class="upload-text">Add an image</div>
+                    <div class="upload-hint">Click to upload (JPG, PNG, or GIF)</div>
+                </div>
+                <input type="file" id="postImage" name="image" accept="image/*" class="file-input">
+                
+                <div class="image-preview-container" id="imagePreviewContainer">
+                    <img id="imagePreview" class="image-preview" alt="Preview">
+                    <button type="button" class="remove-image-btn" onclick="removeImage()">✕</button>
+                </div>
+            </div>
+            
+            <div class="post-options">
+                <button type="button" class="option-btn" onclick="document.getElementById('postImage').click()">
+                    <span>📷</span>
+                    <span>Photo</span>
+                </button>
+                <button type="button" class="option-btn">
+                    <span>😊</span>
+                    <span>Feeling</span>
+                </button>
+                <button type="button" class="option-btn">
+                    <span>📍</span>
+                    <span>Location</span>
+                </button>
+                <button type="button" class="option-btn">
+                    <span>@</span>
+                    <span>Tag</span>
+                </button>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                    <span>📤</span>
+                    <span>Publish Post</span>
+                </button>
+                <a href="{% url 'feed' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const postContent = document.getElementById('postContent');
+    const charCount = document.getElementById('charCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const postImage = document.getElementById('postImage');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    function updateCharCount() {
+        const count = postContent.value.length;
+        charCount.textContent = count;
+        
+        // Enable/disable submit button
+        submitBtn.disabled = count === 0;
+        
+        // Change color based on character count
+        if (count >= 4500) {
+            charCount.style.color = 'var(--danger)';
+        } else if (count >= 4000) {
+            charCount.style.color = 'var(--warning)';
+        } else {
+            charCount.style.color = 'var(--text-muted)';
+        }
+    }
+    
+    // Image upload preview
+    postImage.addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.classList.add('active');
+            };
+            reader.readAsDataURL(this.files[0]);
+            submitBtn.disabled = false;
+        }
+    });
+    
+    function removeImage() {
+        postImage.value = '';
+        imagePreviewContainer.classList.remove('active');
+        updateCharCount();
+    }
+</script>
+{% endblock %}
