@@ -1,3 +1,5 @@
+[![Tests](https://github.com/Pi-UniVerse/UniVerse/actions/workflows/test.yml/badge.svg)](https://github.com/Pi-UniVerse/UniVerse/actions/workflows/test.yml)
+
 # 🌐 UniVerse - AI-Powered Social Media Platform
 
 <div align="center">
