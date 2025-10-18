@@ -4,35 +4,36 @@
 {% block title %}Register - UniVerse{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/toast.css' %}">
 <style>
     body {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .auth-container {
-        min-height: calc(100vh - var(--navbar-height));
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-container {
+        width: 100%;
+        max-width: 520px;
         padding: 2rem 1rem;
     }
     
     .auth-card {
         background: rgba(255, 255, 255, 0.98);
-        backdrop-filter: blur(20px) saturate(180%);
-        border-radius: 1.5rem;
-        padding: 3rem;
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 3rem 2.5rem;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        width: 100%;
-        max-width: 520px;
-        animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: slideUp 0.4s ease;
     }
     
     @keyframes slideUp {
         from {
             opacity: 0;
-            transform: translateY(20px);
+            transform: translateY(30px);
         }
         to {
             opacity: 1;
@@ -40,15 +41,14 @@
         }
     }
     
-    .auth-logo {
+    .auth-header {
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 2.5rem;
     }
     
-    .auth-logo-icon {
-        font-size: 4rem;
+    .auth-logo {
+        font-size: 3.5rem;
         margin-bottom: 1rem;
-        display: inline-block;
         animation: float 3s ease-in-out infinite;
     }
     
@@ -58,66 +58,17 @@
     }
     
     .auth-title {
-        font-size: 2rem;
+        font-size: 1.875rem;
         font-weight: 800;
-        text-align: center;
-        margin-bottom: 0.5rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        background-clip: text;
+        margin-bottom: 0.5rem;
     }
     
     .auth-subtitle {
-        text-align: center;
-        color: var(--text-muted);
+        color: #64748b;
         font-size: 0.9375rem;
-        margin-bottom: 2rem;
-    }
-    
-    /* Error/Success Messages */
-    .alert {
-        padding: 1rem 1.25rem;
-        border-radius: 0.75rem;
-        margin-bottom: 1.5rem;
-        font-size: 0.9375rem;
-        font-weight: 500;
-        animation: slideDown 0.3s ease;
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .alert-error {
-        background: #fee2e2;
-        border-left: 4px solid #ef4444;
-        color: #991b1b;
-    }
-    
-    .alert-success {
-        background: #d1fae5;
-        border-left: 4px solid #10b981;
-        color: #065f46;
-    }
-    
-    .alert-warning {
-        background: #fef3c7;
-        border-left: 4px solid #f59e0b;
-        color: #92400e;
-    }
-    
-    .alert-info {
-        background: #dbeafe;
-        border-left: 4px solid #3b82f6;
-        color: #1e40af;
     }
     
     .form-row {
@@ -133,42 +84,33 @@
     .form-label {
         display: block;
         font-weight: 600;
-        color: var(--text-primary);
+        color: #1e293b;
         margin-bottom: 0.5rem;
-        font-size: 0.9375rem;
+        font-size: 0.875rem;
     }
     
     .required {
         color: #ef4444;
-        margin-left: 2px;
     }
     
     .form-input {
         width: 100%;
-        padding: 1rem 1.25rem;
-        border: 2px solid var(--border);
-        border-radius: 0.75rem;
+        padding: 0.875rem 1.125rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
         font-size: 1rem;
-        transition: all 0.2s ease;
+        transition: all 0.2s;
         background: white;
-        color: var(--text-primary);
-        font-family: inherit;
     }
     
     .form-input:focus {
         outline: none;
         border-color: #667eea;
         box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-        transform: translateY(-1px);
     }
     
     .form-input::placeholder {
-        color: var(--text-muted);
-    }
-    
-    .form-input.error {
-        border-color: #ef4444;
-        background: #fef2f2;
+        color: #94a3b8;
     }
     
     .password-wrapper {
@@ -182,11 +124,10 @@
         transform: translateY(-50%);
         background: none;
         border: none;
-        color: var(--text-muted);
-        cursor: pointer;
         font-size: 1.25rem;
-        padding: 0.25rem;
-        transition: all 0.2s ease;
+        cursor: pointer;
+        color: #94a3b8;
+        transition: all 0.2s;
     }
     
     .password-toggle:hover {
@@ -204,7 +145,7 @@
     .password-strength-bar {
         height: 100%;
         width: 0%;
-        transition: all 0.3s ease;
+        transition: all 0.3s;
         border-radius: 999px;
     }
     
@@ -225,18 +166,8 @@
     
     .form-hint {
         font-size: 0.8125rem;
-        color: var(--text-muted);
+        color: #94a3b8;
         margin-top: 0.375rem;
-        display: block;
-    }
-    
-    .form-error {
-        font-size: 0.8125rem;
-        color: #ef4444;
-        margin-top: 0.375rem;
-        display: flex;
-        align-items: center;
-        gap: 0.375rem;
     }
     
     .terms-checkbox {
@@ -244,6 +175,7 @@
         align-items: flex-start;
         gap: 0.75rem;
         margin-bottom: 1.5rem;
+        font-size: 0.875rem;
     }
     
     .terms-checkbox input {
@@ -256,9 +188,8 @@
     }
     
     .terms-checkbox label {
-        font-size: 0.9375rem;
-        color: var(--text-secondary);
-        line-height: 1.6;
+        color: #64748b;
+        line-height: 1.5;
     }
     
     .terms-checkbox a {
@@ -267,24 +198,18 @@
         font-weight: 600;
     }
     
-    .terms-checkbox a:hover {
-        text-decoration: underline;
-    }
-    
     .btn-submit {
         width: 100%;
         padding: 1rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 999px;
+        border-radius: 12px;
         font-weight: 700;
         font-size: 1rem;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all 0.2s;
         box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     
     .btn-submit:hover:not(:disabled) {
@@ -292,63 +217,17 @@
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
     }
     
-    .btn-submit:active:not(:disabled) {
-        transform: translateY(0);
-    }
-    
     .btn-submit:disabled {
         opacity: 0.6;
         cursor: not-allowed;
     }
     
-    .divider {
-        display: flex;
-        align-items: center;
-        text-align: center;
-        margin: 2rem 0;
-    }
-    
-    .divider::before,
-    .divider::after {
-        content: '';
-        flex: 1;
-        border-bottom: 1px solid var(--border);
-    }
-    
-    .divider span {
-        padding: 0 1rem;
-        color: var(--text-muted);
-        font-size: 0.875rem;
-        font-weight: 600;
-    }
-    
-    .social-login {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .social-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        padding: 0.875rem;
-        background: white;
-        border: 2px solid var(--border);
-        border-radius: 0.75rem;
-        font-weight: 600;
-        cursor: not-allowed;
-        transition: all 0.2s ease;
-        opacity: 0.5;
-    }
-    
     .auth-switch {
         text-align: center;
+        margin-top: 2rem;
         padding-top: 2rem;
-        border-top: 1px solid var(--border);
-        color: var(--text-secondary);
+        border-top: 1px solid #e2e8f0;
+        color: #64748b;
         font-size: 0.9375rem;
     }
     
@@ -356,24 +235,14 @@
         color: #667eea;
         text-decoration: none;
         font-weight: 700;
-        transition: all 0.2s ease;
-    }
-    
-    .auth-switch a:hover {
-        color: #764ba2;
-        text-decoration: underline;
     }
     
     @media (max-width: 640px) {
         .auth-card {
-            padding: 2rem;
+            padding: 2rem 1.5rem;
         }
         
         .form-row {
-            grid-template-columns: 1fr;
-        }
-        
-        .social-login {
             grid-template-columns: 1fr;
         }
     }
@@ -381,25 +250,24 @@
 {% endblock %}
 
 {% block content %}
+<!-- Hidden Django messages for toast -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="django-message" data-type="{{ message.tags }}" style="display: none;">
+            {{ message|safe }}
+        </div>
+    {% endfor %}
+{% endif %}
+
 <div class="auth-container">
     <div class="auth-card">
-        <div class="auth-logo">
-            <div class="auth-logo-icon">🌐</div>
+        <div class="auth-header">
+            <div class="auth-logo">🌐</div>
             <h1 class="auth-title">Create Account</h1>
             <p class="auth-subtitle">Join UniVerse today</p>
         </div>
         
-        <!-- Display Messages -->
-        {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                {% if message.tags == 'error' %}❌{% elif message.tags == 'success' %}✅{% elif message.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
-                {{ message }}
-            </div>
-            {% endfor %}
-        {% endif %}
-        
-        <form method="post" id="registerForm" novalidate>
+        <form method="post" id="registerForm">
             {% csrf_token %}
             
             <div class="form-row">
@@ -412,7 +280,6 @@
                         class="form-input" 
                         placeholder="John"
                         value="{{ first_name|default:'' }}"
-                        autocomplete="given-name"
                     >
                 </div>
                 
@@ -425,7 +292,6 @@
                         class="form-input" 
                         placeholder="Doe"
                         value="{{ last_name|default:'' }}"
-                        autocomplete="family-name"
                     >
                 </div>
             </div>
@@ -438,14 +304,14 @@
                     type="text" 
                     id="username" 
                     name="username" 
-                    class="form-input {% if errors.username %}error{% endif %}" 
+                    class="form-input" 
                     placeholder="johndoe"
                     value="{{ username|default:'' }}"
                     required
                     minlength="3"
-                    autocomplete="username"
+                    autofocus
                 >
-                <span class="form-hint">At least 3 characters, unique identifier</span>
+                <span class="form-hint">At least 3 characters</span>
             </div>
             
             <div class="form-group">
@@ -456,11 +322,10 @@
                     type="email" 
                     id="email" 
                     name="email" 
-                    class="form-input {% if errors.email %}error{% endif %}" 
+                    class="form-input" 
                     placeholder="john@example.com"
                     value="{{ email|default:'' }}"
                     required
-                    autocomplete="email"
                 >
             </div>
             
@@ -473,11 +338,10 @@
                         type="password" 
                         id="password1" 
                         name="password1" 
-                        class="form-input {% if errors.password1 %}error{% endif %}" 
+                        class="form-input" 
                         placeholder="Create a strong password"
                         required
                         minlength="8"
-                        autocomplete="new-password"
                         onkeyup="checkPasswordStrength()"
                     >
                     <button type="button" class="password-toggle" onclick="togglePassword('password1', this)" tabindex="-1">
@@ -487,7 +351,7 @@
                 <div class="password-strength">
                     <div class="password-strength-bar" id="passwordStrength"></div>
                 </div>
-                <span class="form-hint">At least 8 characters, mix of letters, numbers & symbols</span>
+                <span class="form-hint">At least 8 characters</span>
             </div>
             
             <div class="form-group">
@@ -499,11 +363,10 @@
                         type="password" 
                         id="password2" 
                         name="password2" 
-                        class="form-input {% if errors.password2 %}error{% endif %}" 
+                        class="form-input" 
                         placeholder="Confirm your password"
                         required
                         minlength="8"
-                        autocomplete="new-password"
                     >
                     <button type="button" class="password-toggle" onclick="togglePassword('password2', this)" tabindex="-1">
                         👁️
@@ -514,7 +377,7 @@
             <div class="terms-checkbox">
                 <input type="checkbox" id="terms" name="terms" required>
                 <label for="terms">
-                    I agree to the <a href="#" onclick="return false;">Terms of Service</a> and <a href="#" onclick="return false;">Privacy Policy</a>
+                    I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
                 </label>
             </div>
             
@@ -523,31 +386,16 @@
             </button>
         </form>
         
-        <div class="divider">
-            <span>OR</span>
-        </div>
-        
-        <div class="social-login">
-            <button type="button" class="social-btn" disabled title="Coming Soon">
-                <span>🔵</span>
-                <span>Facebook</span>
-            </button>
-            <button type="button" class="social-btn" disabled title="Coming Soon">
-                <span>🔴</span>
-                <span>Google</span>
-            </button>
-        </div>
-        
         <div class="auth-switch">
             Already have an account? <a href="{% url 'login' %}">Login</a>
         </div>
     </div>
 </div>
 
+<script src="{% static 'js/toast.js' %}"></script>
 <script>
     function togglePassword(inputId, btn) {
         const input = document.getElementById(inputId);
-        
         if (input.type === 'password') {
             input.type = 'text';
             btn.textContent = '🙈';
@@ -559,62 +407,66 @@
     
     function checkPasswordStrength() {
         const password = document.getElementById('password1').value;
-        const strengthBar = document.getElementById('passwordStrength');
+        const bar = document.getElementById('passwordStrength');
         
         if (!password) {
-            strengthBar.className = 'password-strength-bar';
+            bar.className = 'password-strength-bar';
             return;
         }
         
         let strength = 0;
-        
         if (password.length >= 8) strength++;
         if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
         if (password.match(/[0-9]/)) strength++;
         if (password.match(/[^a-zA-Z0-9]/)) strength++;
         
-        strengthBar.className = 'password-strength-bar';
-        
-        if (strength <= 2) {
-            strengthBar.classList.add('weak');
-        } else if (strength === 3) {
-            strengthBar.classList.add('medium');
-        } else {
-            strengthBar.classList.add('strong');
-        }
+        bar.className = 'password-strength-bar';
+        if (strength <= 2) bar.classList.add('weak');
+        else if (strength === 3) bar.classList.add('medium');
+        else bar.classList.add('strong');
     }
     
-    // Form submission handling
     document.getElementById('registerForm').addEventListener('submit', function(e) {
-        const submitBtn = document.getElementById('submitBtn');
-        const terms = document.getElementById('terms');
+        const btn = document.getElementById('submitBtn');
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password1 = document.getElementById('password1').value;
+        const password2 = document.getElementById('password2').value;
+        const terms = document.getElementById('terms').checked;
         
-        if (!terms.checked) {
+        // Validate
+        if (!username || username.length < 3) {
             e.preventDefault();
-            alert('⚠️ Please accept the Terms of Service and Privacy Policy');
+            showToast('Username must be at least 3 characters', 'error');
             return false;
         }
         
-        // Disable button to prevent double submission
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Creating Account...';
-        
-        // Re-enable after 3 seconds in case of error
-        setTimeout(() => {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Create Account';
-        }, 3000);
-    });
-    
-    // Auto-focus on first empty required field
-    window.addEventListener('load', function() {
-        const inputs = document.querySelectorAll('input[required]');
-        for (let input of inputs) {
-            if (!input.value) {
-                input.focus();
-                break;
-            }
+        if (!email) {
+            e.preventDefault();
+            showToast('Email is required', 'error');
+            return false;
         }
+        
+        if (password1.length < 8) {
+            e.preventDefault();
+            showToast('Password must be at least 8 characters', 'error');
+            return false;
+        }
+        
+        if (password1 !== password2) {
+            e.preventDefault();
+            showToast('Passwords do not match', 'error');
+            return false;
+        }
+        
+        if (!terms) {
+            e.preventDefault();
+            showToast('Please accept the Terms of Service', 'error');
+            return false;
+        }
+        
+        btn.disabled = true;
+        btn.textContent = 'Creating Account...';
     });
 </script>
 {% endblock %}

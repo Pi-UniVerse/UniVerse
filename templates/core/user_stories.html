@@ -1,10 +1,20 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ story_user.username }}'s Stories - UniVerse {% endblock %}
+{% block title %}{{ story_user.username }}'s Stories - UniVerse{% endblock %}
 
 {% block extra_css %}
 <style>
+    /* Hide navbar */
+    nav {
+        display: none !important;
+    }
+    
+    body {
+        margin: 0;
+        overflow: hidden;
+    }
+    
     .stories-viewer {
         position: fixed;
         top: 0;
@@ -13,46 +23,33 @@
         bottom: 0;
         background: #000;
         z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
     
-    .story-content {
-        max-width: 500px;
+    .story-container {
+        position: relative;
         width: 100%;
         height: 100vh;
-        position: relative;
+        max-width: 500px;
+        margin: 0 auto;
         background: #000;
     }
     
-    .story-media {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    
-    .story-header {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        padding: 1rem;
-        background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-        z-index: 10;
-    }
-    
+    /* Progress bars - Instagram style */
     .story-progress-bars {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        right: 8px;
         display: flex;
         gap: 4px;
-        margin-bottom: 1rem;
+        z-index: 200;
     }
     
     .progress-bar {
         flex: 1;
-        height: 3px;
-        background: rgba(255,255,255,0.3);
-        border-radius: 2px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.4);
+        border-radius: 1px;
         overflow: hidden;
     }
     
@@ -75,53 +72,130 @@
         to { width: 100%; }
     }
     
-    .story-author-info {
+    /* Story header - Instagram style */
+    .story-header {
+        position: absolute;
+        top: 16px;
+        left: 12px;
+        right: 60px;
+        z-index: 200;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 10px;
     }
     
     .story-avatar {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
         border: 2px solid white;
         object-fit: cover;
+        flex-shrink: 0;
+    }
+    
+    .story-author-info {
+        flex: 1;
+        min-width: 0;
     }
     
     .story-author-name {
         color: white;
         font-weight: 600;
+        font-size: 14px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     .story-time {
-        color: rgba(255,255,255,0.8);
-        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 12px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     }
     
+    /* Close button - Instagram style */
     .story-close {
         position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: rgba(0,0,0,0.5);
+        top: 16px;
+        right: 12px;
+        background: transparent;
         border: none;
         color: white;
-        font-size: 2rem;
+        font-size: 28px;
         cursor: pointer;
-        z-index: 11;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
+        z-index: 201;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: background 0.2s ease;
+        transition: transform 0.2s;
+        line-height: 1;
+        font-weight: 300;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     }
     
     .story-close:hover {
-        background: rgba(0,0,0,0.8);
+        transform: scale(1.1);
     }
     
+    /* Story content - FILL SCREEN like Instagram */
+    .story-display {
+        width: 100%;
+        height: 100vh;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .story-media {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Cover instead of contain */
+        object-position: center;
+    }
+    
+    .story-text-content {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 80px 24px 24px;
+    }
+    
+    .story-text-inner {
+        color: white;
+        font-size: 32px;
+        font-weight: 700;
+        text-align: center;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+        word-wrap: break-word;
+        max-width: 100%;
+        line-height: 1.3;
+    }
+    
+    /* Caption - Instagram style */
+    .story-caption {
+        position: absolute;
+        bottom: 20px;
+        left: 16px;
+        right: 16px;
+        color: white;
+        text-align: left;
+        padding: 12px 16px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        font-size: 14px;
+        line-height: 1.4;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        z-index: 199;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    /* Navigation areas */
     .story-navigation {
         position: absolute;
         top: 0;
@@ -129,64 +203,97 @@
         right: 0;
         bottom: 0;
         display: flex;
+        z-index: 100;
     }
     
     .nav-area {
         flex: 1;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
     }
     
-    .story-caption {
+    .nav-area:active {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Pause indicator */
+    .pause-indicator {
         position: absolute;
-        bottom: 2rem;
-        left: 1rem;
-        right: 1rem;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 48px;
         color: white;
-        text-align: center;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-        padding: 1rem;
-        background: rgba(0,0,0,0.3);
-        border-radius: 0.5rem;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 150;
+        pointer-events: none;
+    }
+    
+    .pause-indicator.show {
+        opacity: 1;
+    }
+    
+    /* Responsive */
+    @media (max-width: 500px) {
+        .story-container {
+            max-width: 100%;
+        }
+    }
+    
+    /* Hide scrollbar for caption */
+    .story-caption::-webkit-scrollbar {
+        width: 0;
+        display: none;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="stories-viewer">
-    <div class="story-content">
-        <button class="story-close" onclick="window.location='{% url 'stories_feed' %}'">×</button>
-        
-        <div class="story-header">
-            <div class="story-progress-bars" id="progressBars">
-                {% for story in stories %}
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-{{ forloop.counter0 }}"></div>
-                </div>
-                {% endfor %}
+    <div class="story-container">
+        <!-- Progress bars -->
+        <div class="story-progress-bars" id="progressBars">
+            {% for story in stories %}
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-{{ forloop.counter0 }}"></div>
             </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Story header -->
+        <div class="story-header">
+            {% if story_user.profile.profile_picture %}
+                <img src="{{ story_user.profile.profile_picture_url }}" alt="{{ story_user.username }}" class="story-avatar">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ story_user.username|urlencode }}&size=64&background=667eea&color=fff&bold=true&format=png" 
+                     alt="{{ story_user.username }}" 
+                     class="story-avatar">
+            {% endif %}
             
             <div class="story-author-info">
-                {% if story_user.profile.profile_picture %}
-                    <img src="{{ story_user.profile.profile_picture.url }}" alt="{{ story_user.username }}" class="story-avatar">
-                {% else %}
-                    <div class="story-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
-                        {{ story_user.username|first|upper }}
-                    </div>
-                {% endif %}
-                
-                <div>
-                    <div class="story-author-name">{{ story_user.username }}</div>
-                    <div class="story-time" id="storyTime"></div>
-                </div>
+                <div class="story-author-name">{{ story_user.username }}</div>
+                <div class="story-time" id="storyTime"></div>
             </div>
         </div>
         
-        <div id="storyDisplay"></div>
+        <!-- Close button -->
+        <button class="story-close" onclick="window.location='{% url 'stories_feed' %}'">×</button>
+        
+        <!-- Story display -->
+        <div class="story-display" id="storyDisplay"></div>
+        
+        <!-- Caption -->
         <div id="storyCaptionDisplay" class="story-caption" style="display: none;"></div>
         
+        <!-- Pause indicator -->
+        <div class="pause-indicator" id="pauseIndicator">⏸</div>
+        
+        <!-- Navigation areas -->
         <div class="story-navigation">
-            <div class="nav-area" onclick="previousStory()"></div>
-            <div class="nav-area" onclick="nextStory()"></div>
+            <div class="nav-area" id="prevArea"></div>
+            <div class="nav-area" id="nextArea"></div>
         </div>
     </div>
 </div>
@@ -210,6 +317,9 @@
     
     let currentIndex = 0;
     let storyTimer = null;
+    let isPaused = false;
+    let startTime = 0;
+    let remainingTime = 0;
     
     function showStory(index) {
         if (index < 0 || index >= stories.length) {
@@ -222,25 +332,22 @@
         const display = document.getElementById('storyDisplay');
         const captionDisplay = document.getElementById('storyCaptionDisplay');
         
-        // Clear previous timer
-        if (storyTimer) {
-            clearTimeout(storyTimer);
-        }
+        clearTimeout(storyTimer);
         
         // Update content
         if (story.image) {
             display.innerHTML = `<img src="${story.image}" alt="Story" class="story-media">`;
         } else if (story.video) {
-            display.innerHTML = `<video src="${story.video}" class="story-media" autoplay loop muted></video>`;
+            display.innerHTML = `<video src="${story.video}" class="story-media" autoplay loop muted playsinline></video>`;
         } else {
-            display.innerHTML = `<div class="story-media" style="background: ${story.background_color}; display: flex; align-items: center; justify-content: center; padding: 2rem;">
-                <div style="color: white; font-size: 1.5rem; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">
-                    ${story.caption}
+            display.innerHTML = `
+                <div class="story-text-content" style="background: ${story.background_color};">
+                    <div class="story-text-inner">${story.caption || ''}</div>
                 </div>
-            </div>`;
+            `;
         }
         
-        // Show caption if exists and not text-only story
+        // Show caption
         if (story.caption && (story.image || story.video)) {
             captionDisplay.textContent = story.caption;
             captionDisplay.style.display = 'block';
@@ -253,18 +360,22 @@
         // Update progress bars
         document.querySelectorAll('.progress-fill').forEach((bar, i) => {
             bar.classList.remove('active', 'completed');
+            bar.style.animation = 'none';
+            
             if (i < index) {
                 bar.classList.add('completed');
             } else if (i === index) {
+                void bar.offsetWidth;
                 bar.classList.add('active');
-                bar.style.animationDuration = `${story.duration}s`;
+                bar.style.animation = `progress ${story.duration}s linear forwards`;
             } else {
                 bar.style.width = '0';
             }
         });
         
-        // Set timer for next story
-        storyTimer = setTimeout(() => nextStory(), story.duration * 1000);
+        startTime = Date.now();
+        remainingTime = story.duration * 1000;
+        storyTimer = setTimeout(() => nextStory(), remainingTime);
     }
     
     function nextStory() {
@@ -277,14 +388,111 @@
         }
     }
     
+    function pauseStory() {
+        if (isPaused) return;
+        isPaused = true;
+        
+        clearTimeout(storyTimer);
+        remainingTime -= (Date.now() - startTime);
+        
+        document.querySelectorAll('.progress-fill.active').forEach(bar => {
+            bar.style.animationPlayState = 'paused';
+        });
+        
+        document.getElementById('pauseIndicator').classList.add('show');
+    }
+    
+    function resumeStory() {
+        if (!isPaused) return;
+        isPaused = false;
+        
+        document.querySelectorAll('.progress-fill.active').forEach(bar => {
+            bar.style.animationPlayState = 'running';
+        });
+        
+        startTime = Date.now();
+        storyTimer = setTimeout(() => nextStory(), remainingTime);
+        
+        document.getElementById('pauseIndicator').classList.remove('show');
+    }
+    
+    // Touch/Click controls
+    const prevArea = document.getElementById('prevArea');
+    const nextArea = document.getElementById('nextArea');
+    
+    // Previous area - single tap goes back, hold pauses
+    let holdTimer;
+    
+    prevArea.addEventListener('mousedown', () => {
+        holdTimer = setTimeout(pauseStory, 200);
+    });
+    
+    prevArea.addEventListener('mouseup', () => {
+        clearTimeout(holdTimer);
+        if (!isPaused) {
+            previousStory();
+        } else {
+            resumeStory();
+        }
+    });
+    
+    prevArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        holdTimer = setTimeout(pauseStory, 200);
+    });
+    
+    prevArea.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        clearTimeout(holdTimer);
+        if (!isPaused) {
+            previousStory();
+        } else {
+            resumeStory();
+        }
+    });
+    
+    // Next area - single tap goes next, hold pauses
+    nextArea.addEventListener('mousedown', () => {
+        holdTimer = setTimeout(pauseStory, 200);
+    });
+    
+    nextArea.addEventListener('mouseup', () => {
+        clearTimeout(holdTimer);
+        if (!isPaused) {
+            nextStory();
+        } else {
+            resumeStory();
+        }
+    });
+    
+    nextArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        holdTimer = setTimeout(pauseStory, 200);
+    });
+    
+    nextArea.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        clearTimeout(holdTimer);
+        if (!isPaused) {
+            nextStory();
+        } else {
+            resumeStory();
+        }
+    });
+    
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') previousStory();
         if (e.key === 'ArrowRight') nextStory();
         if (e.key === 'Escape') window.location = '{% url "stories_feed" %}';
+        if (e.key === ' ') {
+            e.preventDefault();
+            if (isPaused) resumeStory();
+            else pauseStory();
+        }
     });
     
-    // Start with first story
+    // Start
     if (stories.length > 0) {
         showStory(0);
     } else {

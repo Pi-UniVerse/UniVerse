@@ -2,52 +2,49 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Auth URLs
+    # ========== AUTHENTICATION ==========
     path('', views.feed, name='feed'),
-    path('register/', views.register, name='register'),
+    path('register/', views.register_view, name='register'),  # ← Fixed
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     
-    # Profile URLs
+    # ========== PROFILE ==========
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('profile/<str:username>/', views.profile, name='profile'),
     
-    # Post URLs
+    # ========== POSTS ==========
     path('post/create/', views.create_post, name='create_post'),
     path('post/<int:post_id>/delete/', views.delete_post, name='delete_post'),
     path('post/<int:post_id>/like/', views.like_post, name='like_post'),
     path('post/<int:post_id>/comment/', views.add_comment, name='add_comment'),
     
-    # Follow URLs
+    # ========== FOLLOW ==========
     path('follow/<str:username>/', views.follow_user, name='follow_user'),
     path('unfollow/<str:username>/', views.unfollow_user, name='unfollow_user'),
     
-    # Message URLs
+    # ========== MESSAGES ==========
     path('messages/', views.messages_list, name='messages_list'),
     path('messages/<str:username>/', views.message_detail, name='message_detail'),
-    path('messages/<str:username>/send/', views.send_message, name='send_message'),
     
-    # Notification URLs
+    # ========== NOTIFICATIONS ==========
     path('notifications/', views.notifications, name='notifications'),
     
-    # Search URLs
+    # ========== SEARCH ==========
     path('search/', views.search_users, name='search_users'),
     
-    # ==================== NEW URLS ====================
-    
-    # Story URLs
+    # ========== STORIES ==========
     path('stories/', views.stories_feed, name='stories_feed'),
     path('story/create/', views.create_story, name='create_story'),
     path('story/<int:story_id>/', views.view_story, name='view_story'),
     path('story/<int:story_id>/delete/', views.delete_story, name='delete_story'),
     path('stories/<str:username>/', views.user_stories, name='user_stories'),
     
-    # Story Highlight URLs
+    # ========== STORY HIGHLIGHTS ==========
     path('highlights/create/', views.create_highlight, name='create_highlight'),
     path('highlight/<int:highlight_id>/', views.view_highlight, name='view_highlight'),
     path('highlight/<int:highlight_id>/delete/', views.delete_highlight, name='delete_highlight'),
     
-    # Video URLs
+    # ========== VIDEOS ==========
     path('videos/', views.videos_feed, name='videos_feed'),
     path('video/upload/', views.upload_video, name='upload_video'),
     path('video/<int:video_id>/', views.video_detail, name='video_detail'),
@@ -58,7 +55,7 @@ urlpatterns = [
     path('videos/category/<str:category>/', views.videos_by_category, name='videos_by_category'),
     path('videos/search/', views.search_videos, name='search_videos'),
     
-    # Playlist URLs
+    # ========== PLAYLISTS ==========
     path('playlists/', views.my_playlists, name='my_playlists'),
     path('playlist/create/', views.create_playlist, name='create_playlist'),
     path('playlist/<int:playlist_id>/', views.playlist_detail, name='playlist_detail'),
@@ -67,7 +64,7 @@ urlpatterns = [
     path('playlist/<int:playlist_id>/add/<int:video_id>/', views.add_to_playlist, name='add_to_playlist'),
     path('playlist/<int:playlist_id>/remove/<int:video_id>/', views.remove_from_playlist, name='remove_from_playlist'),
     
-    # Group URLs
+    # ========== GROUPS ==========
     path('groups/', views.groups_list, name='groups_list'),
     path('group/create/', views.create_group, name='create_group'),
     path('group/<int:group_id>/', views.group_detail, name='group_detail'),
