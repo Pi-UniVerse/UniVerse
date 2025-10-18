@@ -1,16 +1,15 @@
 import os
 from pathlib import Path
-import dj_database_url
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECRET KEY
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
-# DEBUG
+# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-# ALLOWED HOSTS
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
@@ -21,6 +20,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary_storage',
+    'cloudinary',
     'core',
 ]
 
@@ -56,9 +57,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'social_media.wsgi.application'
 
-# Database Configuration
-# Priority: DATABASE_URL (Render) > SQLite (CI/Testing) > MySQL (Local Dev)
-if 'DATABASE_URL' in os.environ:
+# Database
+# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+
+# Import dj_database_url only if needed
+try:
+    import dj_database_url
+    HAS_DJ_DATABASE_URL = True
+except ImportError:
+    HAS_DJ_DATABASE_URL = False
+
+if 'DATABASE_URL' in os.environ and HAS_DJ_DATABASE_URL:
     # Production - Render.com with PostgreSQL
     DATABASES = {
         'default': dj_database_url.config(
@@ -76,21 +85,31 @@ elif 'GITHUB_ACTIONS' in os.environ or 'CI' in os.environ:
         }
     }
 else:
-    # Local Development - MySQL
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('DB_NAME', 'django_social_media'),
-            'USER': os.environ.get('DB_USER', 'root'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
-            'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-            'PORT': os.environ.get('DB_PORT', '3306'),
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
+    # Local Development - MySQL or SQLite
+    use_sqlite = os.environ.get('USE_SQLITE', 'False') == 'True'
+    
+    if use_sqlite:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
         }
-    }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': os.environ.get('DB_NAME', 'django_social_media'),
+                'USER': os.environ.get('DB_USER', 'root'),
+                'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+                'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+                'PORT': os.environ.get('DB_PORT', '3306'),
+                'OPTIONS': {
+                    'charset': 'utf8mb4',
+                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                },
+            }
+        }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -106,7 +125,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -115,13 +134,40 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login URLs
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'feed'
 LOGOUT_REDIRECT_URL = 'login'
+
+# ============ CLOUDINARY CONFIGURATION ============
+try:
+    import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+    
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dylup4dax'),
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '347375919266826'),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'h06pG1mHwOOjOwJ_XWI3Fd3hMY4'),
+    }
+    
+    cloudinary.config(
+        cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+        api_key=CLOUDINARY_STORAGE['API_KEY'],
+        api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+        secure=True
+    )
+    
+    # Use Cloudinary for media files in production
+    if 'RENDER' in os.environ or not DEBUG:
+        DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+        
+except ImportError:
+    # Cloudinary not installed, use default file storage
+    pass
 
 # ============ RENDER.COM PRODUCTION SETTINGS ============
 if 'RENDER' in os.environ:

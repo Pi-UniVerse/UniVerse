@@ -17,9 +17,17 @@ class FollowAdmin(admin.ModelAdmin):
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('author', 'created_at', 'like_count', 'comment_count')
+    list_display = ('author', 'created_at', 'get_like_count', 'get_comment_count')
     search_fields = ('author__username', 'content')
     list_filter = ('created_at',)
+    
+    def get_like_count(self, obj):
+        return obj.likes.count()
+    get_like_count.short_description = 'Likes'
+    
+    def get_comment_count(self, obj):
+        return obj.comments.count()
+    get_comment_count.short_description = 'Comments'
 
 @admin.register(Like)
 class LikeAdmin(admin.ModelAdmin):
@@ -42,8 +50,6 @@ class NotificationAdmin(admin.ModelAdmin):
     list_display = ('user', 'actor', 'notification_type', 'is_read', 'created_at')
     search_fields = ('user__username', 'actor__username')
     list_filter = ('notification_type', 'is_read', 'created_at')
-
-# ==================== NEW ADMIN CLASSES ====================
 
 @admin.register(Story)
 class StoryAdmin(admin.ModelAdmin):
@@ -91,11 +97,15 @@ class PlaylistAdmin(admin.ModelAdmin):
 
 @admin.register(Group)
 class GroupAdmin(admin.ModelAdmin):
-    list_display = ('name', 'admin', 'privacy', 'member_count', 'created_at')
+    list_display = ('name', 'admin', 'privacy', 'get_member_count', 'created_at')
     search_fields = ('name', 'admin__username', 'description')
     list_filter = ('privacy', 'created_at')
     filter_horizontal = ('moderators',)
     readonly_fields = ('created_at', 'updated_at')
+    
+    def get_member_count(self, obj):
+        return obj.members.count()
+    get_member_count.short_description = 'Members'
 
 @admin.register(GroupMembership)
 class GroupMembershipAdmin(admin.ModelAdmin):

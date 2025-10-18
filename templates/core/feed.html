@@ -665,7 +665,7 @@
                 
                 <div class="composer-header">
                     {% if user.profile.profile_picture %}
-                        <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="composer-avatar">
+                        <img src="{{ post.author.profile.profile_picture_url }}" alt="{{ post.author.username }}" class="post-author-avatar" loading="lazy">
                     {% else %}
                         <div class="composer-avatar-placeholder">{{ user.username|first|upper }}</div>
                     {% endif %}
@@ -735,7 +735,7 @@
 					<div class="discover-item">
 						<a href="{% url 'profile' suggested_user.username %}" class="discover-avatar-link">
 							{% if suggested_user.profile.profile_picture %}
-								<img src="{{ suggested_user.profile.profile_picture.url }}" alt="{{ suggested_user.username }}" class="discover-avatar-img">
+								<img src="{{ post.author.profile.profile_picture_url }}" alt="{{ post.author.username }}" class="post-author-avatar" loading="lazy">
 							{% else %}
 								<div class="discover-avatar-placeholder">{{ suggested_user.username|first|upper }}</div>
 							{% endif %}

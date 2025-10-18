@@ -3,11 +3,20 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
 
+try:
+    from cloudinary.models import CloudinaryField
+except ImportError:
+    # Fallback to regular ImageField if Cloudinary not installed
+    CloudinaryField = models.ImageField
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     bio = models.TextField(blank=True, max_length=500)
-    profile_picture = models.ImageField(upload_to='profile_pictures/', default='profile_pictures/default.jpg')
-    cover_image = models.ImageField(upload_to='cover_images/', default='cover_images/default.jpg')
+    
+    # Cloudinary fields WITHOUT defaults (we'll handle in signals)
+    profile_picture = CloudinaryField('profile_pictures', blank=True, null=True)
+    cover_image = CloudinaryField('cover_images', blank=True, null=True)
+    
     location = models.CharField(max_length=100, blank=True)
     website = models.URLField(blank=True)
     birth_date = models.DateField(null=True, blank=True)
@@ -16,9 +25,26 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+    
+    @property
+    def profile_picture_url(self):
+        """Return profile picture URL or default"""
+        if self.profile_picture:
+            return self.profile_picture.url
+        # Return Cloudinary default or generated avatar
+        return f"https://res.cloudinary.com/dylup4dax/image/upload/v1760780616/default_uwnwnx.jpg"
+    
+    @property
+    def cover_image_url(self):
+        """Return cover image URL or default"""
+        if self.cover_image:
+            return self.cover_image.url
+        # Return default gradient cover
+        return "https://res.cloudinary.com/dylup4dax/image/upload/v1760780682/default_d2wjjv.jpg"
 
     class Meta:
         ordering = ['-created_at']
+
 
 
 class Follow(models.Model):
@@ -37,7 +63,10 @@ class Follow(models.Model):
 class Post(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     content = models.TextField(max_length=5000)
-    image = models.ImageField(upload_to='posts/', blank=True, null=True)
+    
+    # Update to Cloudinary
+    image = CloudinaryField('post_images', blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,11 +76,6 @@ class Post(models.Model):
     def __str__(self):
         return f"Post by {self.author.username} on {self.created_at}"
 
-    def like_count(self):
-        return self.likes.count()
-
-    def comment_count(self):
-        return self.comments.count()
 
 
 class Like(models.Model):
@@ -119,13 +143,16 @@ class Notification(models.Model):
 class Story(models.Model):
     """Instagram-style stories that expire after 24 hours"""
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stories')
-    image = models.ImageField(upload_to='stories/', blank=True, null=True)
-    video = models.FileField(upload_to='story_videos/', blank=True, null=True)
+    
+    # Update to Cloudinary
+    image = CloudinaryField('story_images', blank=True, null=True)
+    video = CloudinaryField('story_videos', resource_type='video', blank=True, null=True)
+    
     caption = models.CharField(max_length=200, blank=True)
-    duration = models.IntegerField(default=5)  # seconds
+    duration = models.IntegerField(default=5)
     background_color = models.CharField(max_length=200, default='#000000')
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField(blank=True, null=True)  # Add blank=True, null=True
+    expires_at = models.DateTimeField(blank=True, null=True)
     
     class Meta:
         ordering = ['-created_at']
@@ -138,9 +165,7 @@ class Story(models.Model):
     
     def is_expired(self):
         return timezone.now() > self.expires_at
-    
-    def __str__(self):
-        return f"Story by {self.author.username} at {self.created_at}"
+
         
 
 class StoryView(models.Model):
@@ -161,15 +186,13 @@ class StoryHighlight(models.Model):
     """Permanent story collections on profile"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='story_highlights')
     title = models.CharField(max_length=50)
-    cover_image = models.ImageField(upload_to='highlight_covers/', blank=True, null=True)
+    
+    # Update to Cloudinary
+    cover_image = CloudinaryField('highlight_covers', blank=True, null=True)
+    
     stories = models.ManyToManyField(Story, related_name='highlights')
     created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.user.username}'s {self.title} highlight"
+
 
 
 class Video(models.Model):
@@ -189,32 +212,20 @@ class Video(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='videos')
     title = models.CharField(max_length=200)
     description = models.TextField(max_length=5000, blank=True)
-    video_file = models.FileField(upload_to='videos/')
-    thumbnail = models.ImageField(upload_to='thumbnails/', blank=True, null=True)
+    
+    # Update to Cloudinary
+    video_file = CloudinaryField('videos', resource_type='video')
+    thumbnail = CloudinaryField('video_thumbnails', blank=True, null=True)
+    
     duration = models.DurationField(null=True, blank=True)
     views = models.PositiveIntegerField(default=0)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='other')
-    tags = models.CharField(max_length=200, blank=True, help_text="Comma-separated tags")
+    tags = models.CharField(max_length=200, blank=True)
     is_public = models.BooleanField(default=True)
     allow_comments = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.title} by {self.author.username}"
-    
-    def like_count(self):
-        return self.video_likes.count()
-    
-    def comment_count(self):
-        return self.video_comments.count()
-    
-    def increment_views(self):
-        self.views += 1
-        self.save(update_fields=['views'])
+
 
 
 class VideoLike(models.Model):
@@ -274,7 +285,10 @@ class Group(models.Model):
     
     name = models.CharField(max_length=100)
     description = models.TextField(max_length=1000)
-    cover_image = models.ImageField(upload_to='group_covers/', blank=True, null=True)
+    
+    # Update to Cloudinary
+    cover_image = CloudinaryField('group_covers', blank=True, null=True)
+    
     admin = models.ForeignKey(User, on_delete=models.CASCADE, related_name='admin_groups')
     moderators = models.ManyToManyField(User, related_name='moderator_groups', blank=True)
     members = models.ManyToManyField(User, through='GroupMembership', related_name='joined_groups')
@@ -283,18 +297,7 @@ class Group(models.Model):
     category = models.CharField(max_length=50, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return self.name
-    
-    def member_count(self):
-        return self.members.count()
-    
-    def post_count(self):
-        return self.group_posts.count()
+
 
 
 class GroupMembership(models.Model):
@@ -330,22 +333,14 @@ class GroupPost(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_posts')
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_posts')
     content = models.TextField(max_length=5000)
-    image = models.ImageField(upload_to='group_posts/', blank=True, null=True)
+    
+    # Update to Cloudinary
+    image = CloudinaryField('group_post_images', blank=True, null=True)
+    
     is_pinned = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-is_pinned', '-created_at']
-    
-    def __str__(self):
-        return f"Post by {self.author.username} in {self.group.name}"
-    
-    def like_count(self):
-        return self.group_post_likes.count()
-    
-    def comment_count(self):
-        return self.group_post_comments.count()
+
 
 
 class GroupPostLike(models.Model):

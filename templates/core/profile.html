@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ profile_user.username }} - SocialHub{% endblock %}
+{% block title %}{{ profile_user.username }} - UniVerse{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -70,6 +70,12 @@
         border: 5px solid white;
         box-shadow: var(--shadow-lg);
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 3rem;
     }
     
     .profile-actions {
@@ -295,17 +301,12 @@
         border-radius: var(--radius-full);
         object-fit: cover;
         border: 2px solid var(--border);
-    }
-    
-    .post-author-name {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
         font-weight: 700;
-        color: var(--text-primary);
-        font-size: 1rem;
-    }
-    
-    .post-timestamp {
-        font-size: 0.8125rem;
-        color: var(--text-muted);
     }
     
     .post-content {
@@ -402,22 +403,19 @@
 <div class="profile-container">
     <!-- Profile Header -->
     <div class="profile-header">
+        <!-- Cover Image - Using property -->
         <div class="profile-cover">
-            {% if profile_user.profile.cover_image %}
-                <img src="{{ profile_user.profile.cover_image.url }}" alt="Cover">
-            {% endif %}
+            <img src="{{ profile_user.profile.cover_image_url }}" alt="Cover" loading="lazy">
         </div>
         
         <div class="profile-info-section">
             <div class="profile-avatar-container">
                 <div class="profile-avatar-wrapper">
-                    {% if profile_user.profile.profile_picture %}
-                        <img src="{{ profile_user.profile.profile_picture.url }}" alt="{{ profile_user.username }}" class="profile-avatar">
-                    {% else %}
-                        <div class="profile-avatar" style="display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 3rem;">
-                            {{ profile_user.username|first|upper }}
-                        </div>
-                    {% endif %}
+                    <!-- Profile Picture - Using property -->
+                    <img src="{{ profile_user.profile.profile_picture_url }}" 
+                         alt="{{ profile_user.username }}" 
+                         class="profile-avatar" 
+                         loading="lazy">
                 </div>
                 
                 <div class="profile-actions">
@@ -446,6 +444,7 @@
                 </div>
             </div>
             
+            <!-- Rest of profile info stays the same -->
             <h1 class="profile-name">{{ profile_user.get_full_name|default:profile_user.username }}</h1>
             <div class="profile-username">@{{ profile_user.username }}</div>
             
@@ -463,7 +462,7 @@
                 {% if profile_user.profile.website %}
                 <div class="meta-item">
                     <span class="meta-icon">🔗</span>
-                    <a href="{{ profile_user.profile.website }}" target="_blank" style="color: var(--primary); text-decoration: none;">{{ profile_user.profile.website }}</a>
+                    <a href="{{ profile_user.profile.website }}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: none;">{{ profile_user.profile.website }}</a>
                 </div>
                 {% endif %}
                 <div class="meta-item">
@@ -504,13 +503,11 @@
             <article class="post-card">
                 <div class="post-header">
                     <div class="post-author">
-                        {% if post.author.profile.profile_picture %}
-                            <img src="{{ post.author.profile.profile_picture.url }}" alt="{{ post.author.username }}" class="post-author-avatar">
-                        {% else %}
-                            <div class="post-author-avatar" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
-                                {{ post.author.username|first|upper }}
-                            </div>
-                        {% endif %}
+                        <!-- Post Author Avatar - Using property -->
+                        <img src="{{ post.author.profile.profile_picture_url }}" 
+                             alt="{{ post.author.username }}" 
+                             class="post-author-avatar"
+                             loading="lazy">
                         
                         <div>
                             <div class="post-author-name">{{ post.author.get_full_name|default:post.author.username }}</div>
@@ -522,7 +519,7 @@
                 <div class="post-content">{{ post.content }}</div>
                 
                 {% if post.image %}
-                    <img src="{{ post.image.url }}" alt="Post image" class="post-image">
+                    <img src="{{ post.image.url }}" alt="Post image" class="post-image" loading="lazy">
                 {% endif %}
                 
                 <div class="post-actions">
@@ -592,7 +589,7 @@
                 <div style="margin-bottom: 1.5rem;">
                     <strong style="color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.5px;">Website</strong>
                     <p style="margin-top: 0.5rem;">
-                        <a href="{{ profile_user.profile.website }}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;">
+                        <a href="{{ profile_user.profile.website }}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); text-decoration: none; font-weight: 600;">
                             🔗 {{ profile_user.profile.website }}
                         </a>
                     </p>

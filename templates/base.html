@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}UniVerse{% endblock %}</title>
 
+    {% load static %}
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <link rel="shortcut icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -646,11 +650,7 @@
               <div class="dropdown-header">
                 <div class="dropdown-user-info">
                   {% if user.profile.profile_picture %}
-                  <img
-                    src="{{ user.profile.profile_picture.url }}"
-                    alt="{{ user.username }}"
-                    class="dropdown-avatar"
-                  />
+                  <img src="{{ user.profile.profile_picture_url }}" alt="{{ user.username }}" class="user-avatar-small">
                   {% else %}
                   <div class="dropdown-avatar-placeholder">
                     {{ user.username|first|upper }}
