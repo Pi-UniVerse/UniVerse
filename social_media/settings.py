@@ -73,8 +73,8 @@ else:
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': 'django_social_media',
-            'USER': 'django_user',
-            'PASSWORD': 'your_password',
+            'USER': 'root',
+            'PASSWORD': '',
             'HOST': '127.0.0.1',
             'PORT': '3306',
             'OPTIONS': {

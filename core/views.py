@@ -1214,3 +1214,107 @@ def make_moderator(request, group_id, user_id):
         group.moderators.add(user)
     
     return redirect('group_members', group_id=group_id)
+
+def register_view(request):
+    """User registration view with comprehensive validation"""
+    
+    if request.user.is_authenticated:
+        messages.info(request, 'You are already logged in!')
+        return redirect('feed')
+    
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip().lower()
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        terms = request.POST.get('terms')
+        
+        context = {
+            'username': username,
+            'email': email,
+            'first_name': first_name,
+            'last_name': last_name,
+        }
+        
+        errors = []
+        
+        # Username validation
+        if not username:
+            errors.append('❌ Username is required')
+        elif len(username) < 3:
+            errors.append('❌ Username must be at least 3 characters long')
+        elif len(username) > 150:
+            errors.append('❌ Username must be less than 150 characters')
+        elif not username.replace('_', '').replace('-', '').isalnum():
+            errors.append('❌ Username can only contain letters, numbers, underscores, and hyphens')
+        elif User.objects.filter(username__iexact=username).exists():
+            errors.append('❌ Username already exists. Please choose another one')
+        
+        # Email validation
+        if not email:
+            errors.append('❌ Email is required')
+        else:
+            try:
+                validate_email(email)
+            except ValidationError:
+                errors.append('❌ Please enter a valid email address')
+            
+            # Check for duplicate email (case-insensitive)
+            if User.objects.filter(email__iexact=email).exists():
+                existing_user = User.objects.filter(email__iexact=email).first()
+                errors.append(f'❌ This email is already registered to <strong>@{existing_user.username}</strong>. <a href="/login/" style="color: #6366f1; font-weight: 600;">Login instead?</a>')
+        
+        # Password validation
+        if not password1:
+            errors.append('❌ Password is required')
+        elif len(password1) < 8:
+            errors.append('❌ Password must be at least 8 characters long')
+        elif password1.isdigit():
+            errors.append('❌ Password cannot be entirely numeric')
+        elif password1.lower() in ['password', '12345678', 'password123', 'qwerty', 'qwerty123']:
+            errors.append('❌ Password is too common. Please choose a stronger password')
+        
+        if password1 and password2 and password1 != password2:
+            errors.append('❌ Passwords do not match')
+        elif not password2:
+            errors.append('❌ Please confirm your password')
+        
+        if not terms:
+            errors.append('❌ You must accept the Terms of Service and Privacy Policy')
+        
+        # Show errors
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return render(request, 'core/register.html', context)
+        
+        # Create user
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password1,
+                first_name=first_name,
+                last_name=last_name
+            )
+            
+            login(request, user)
+            messages.success(request, f'🎉 Welcome to UniVerse, {username}! Your account has been created successfully.')
+            return redirect('feed')
+            
+        except IntegrityError as e:
+            error_msg = str(e).lower()
+            if 'email' in error_msg or 'duplicate' in error_msg:
+                messages.error(request, '❌ This email is already registered. Please use a different email.')
+            elif 'username' in error_msg:
+                messages.error(request, '❌ Username already exists. Please choose another one.')
+            else:
+                messages.error(request, '❌ An error occurred. Please try again.')
+            return render(request, 'core/register.html', context)
+        except Exception as e:
+            messages.error(request, f'❌ Error creating account: {str(e)}')
+            return render(request, 'core/register.html', context)
+    
+    return render(request, 'core/register.html')
