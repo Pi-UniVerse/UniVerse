@@ -12,6 +12,8 @@ from .ai_utils import (
 )
 import json
 import logging
+import os
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +120,57 @@ def translate_post(request):
         }, status=400)
     except Exception as e:
         logger.error(f"Translation error: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def analyze_image(request):
+    """Analyze uploaded image and return AI-generated caption"""
+    try:
+        if 'image' not in request.FILES:
+            return JsonResponse({
+                'success': False,
+                'error': 'No image provided'
+            }, status=400)
+        
+        image_file = request.FILES['image']
+        
+        # Save temporarily
+        temp_path = None
+        try:
+            # Create temp file
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as temp_file:
+                for chunk in image_file.chunks():
+                    temp_file.write(chunk)
+                temp_path = temp_file.name
+            
+            logger.info(f"Analyzing image: {temp_path}")
+            
+            # Generate caption
+            from .ai_utils import generate_image_description
+            caption = generate_image_description(temp_path)
+            
+            if caption:
+                return JsonResponse({
+                    'success': True,
+                    'caption': caption
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Could not generate caption'
+                }, status=500)
+                
+        finally:
+            # Clean up temp file
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
+                
+    except Exception as e:
+        logger.error(f"Image analysis error: {e}", exc_info=True)
         return JsonResponse({
             'success': False,
             'error': str(e)

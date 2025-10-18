@@ -262,41 +262,43 @@ def create_post(request):
             
             # 🤖 AI Feature 1: Check for toxic content
             if post.content:
-                toxicity = detect_toxic_content(post.content)
-                if toxicity['is_toxic'] and toxicity['score'] > 0.8:
-                    messages.warning(request, '⚠️ Your post may contain inappropriate content. Please review.')
-                    return render(request, 'core/create_post.html', {'form': form})
+                try:
+                    from .ai_utils import detect_toxic_content
+                    toxicity = detect_toxic_content(post.content)
+                    if toxicity['is_toxic'] and toxicity['score'] > 0.8:
+                        messages.warning(request, '⚠️ Your post may contain inappropriate content.')
+                        return render(request, 'core/feed.html', {'form': form})
+                except Exception as e:
+                    logger.error(f"Toxicity check failed: {e}")
+            
+            # Save post first to get file path
+            post.save()
             
             # 🤖 AI Feature 2: Auto-generate image description
-            if 'image' in request.FILES:
-                image_file = request.FILES['image']
-                # Save temporarily to generate caption
-                post.save()  # Save first to get file path
-                
+            if post.image:
                 try:
+                    logger.info(f"Generating caption for image: {post.image.path}")
                     description = generate_image_description(post.image.path)
+                    
                     if description:
-                        # Add description to post content if empty
-                        if not post.content:
-                            post.content = f"📸 {description}"
-                        messages.success(request, f'✨ AI detected: {description}')
+                        # Add AI description to post content if empty
+                        if not post.content or len(post.content.strip()) < 10:
+                            post.content = f"📸 {description.capitalize()}"
+                            post.save()
+                            messages.success(request, f'✨ AI detected: "{description}"')
+                        else:
+                            # Just show the caption
+                            messages.info(request, f'🤖 AI sees: "{description}"')
                 except Exception as e:
-                    logger.error(f"Error generating image description: {e}")
+                    logger.error(f"Image caption generation failed: {e}")
+                    # Don't block post creation if AI fails
             
-            # 🤖 AI Feature 3: Sentiment analysis
-            if post.content:
-                sentiment = analyze_sentiment(post.content)
-                if sentiment:
-                    # Store sentiment in session for analytics
-                    request.session['last_post_sentiment'] = sentiment['label']
-            
-            post.save()
             messages.success(request, '✅ Post created successfully!')
             return redirect('feed')
     else:
         form = PostForm()
     
-    return render(request, 'core/create_post.html', {'form': form})
+    return redirect('feed')
 
 
 @login_required

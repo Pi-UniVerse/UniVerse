@@ -93,4 +93,7 @@ if AI_VIEWS_AVAILABLE:
     urlpatterns += [
         path('ai/translate/', views_ai.translate_post, name='translate_post'),
         path('ai/suggestions/', views_ai.ai_suggestions, name='ai_suggestions'),
+        path('ai/translate/', views_ai.translate_post, name='translate_post'),
+        path('ai/suggestions/', views_ai.ai_suggestions, name='ai_suggestions'),
+        path('ai/analyze-image/', views_ai.analyze_image, name='analyze_image'),  # Add this
     ]

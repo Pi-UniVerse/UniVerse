@@ -1042,15 +1042,57 @@ function previewImageFile(input) {
     if (input.files && input.files[0]) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            document.getElementById('previewImage').src = e.target.result;
-            document.getElementById('imagePreviewContainer').classList.add('active');
+            const previewImg = document.getElementById('previewImage');
+            const container = document.getElementById('imagePreviewContainer');
+            const captionDiv = document.getElementById('imageCaption');
+            const captionText = document.getElementById('imageCaptionText');
             
-            // Generate AI caption for image (optional - can be added later)
-            // generateImageCaption(input.files[0]);
+            previewImg.src = e.target.result;
+            container.classList.add('active');
+            
+            // Show loading state
+            captionDiv.style.display = 'block';
+            captionText.innerHTML = '<em>🤖 AI analyzing image...</em>';
+            
+            // Send image to AI for captioning (optional)
+            analyzeImageWithAI(input.files[0]);
         };
         reader.readAsDataURL(input.files[0]);
     }
 }
+
+async function analyzeImageWithAI(file) {
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('/ai/analyze-image/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.caption) {
+                const captionText = document.getElementById('imageCaptionText');
+                captionText.innerHTML = `<strong>AI detected:</strong> ${data.caption}`;
+                
+                // Optional: Auto-fill content if empty
+                const textarea = document.getElementById('postContent');
+                if (!textarea.value.trim()) {
+                    textarea.value = `📸 ${data.caption}`;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Image analysis error:', error);
+        document.getElementById('imageCaption').style.display = 'none';
+    }
+}
+
 
 function removeImage() {
     document.getElementById('postImage').value = '';
