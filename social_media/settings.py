@@ -7,35 +7,17 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-default-secret-key')
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 HANDLER404 = 'django.views.defaults.page_not_found'
 HANDLER500 = 'django.views.defaults.server_error'
 
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
-
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-if 'RENDER' in os.environ:
-    DEBUG = False
-    ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
-    
-    # Database
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600
-        )
-    }
-    
-    # Static files
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-    
-    # Security
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -79,20 +61,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'social_media.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('DB_NAME', 'django_social_media'),
-        'USER': os.environ.get('DB_USER', 'django_user'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'your_password'),
-        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
-        'PORT': os.environ.get('DB_PORT', '3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+if 'RENDER' in os.environ:
+    # Render.com production database
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Local development database (MySQL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME', 'django_social_media'),
+            'USER': os.environ.get('DB_USER', 'django_user'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', 'your_password'),
+            'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -130,3 +124,22 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'feed'
 LOGOUT_REDIRECT_URL = 'login'
 
+if 'RENDER' in os.environ:
+    DEBUG = False
+    
+    # Get the Render external hostname
+    RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+    if RENDER_EXTERNAL_HOSTNAME:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    
+    # Static files
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    
+    # Security settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
