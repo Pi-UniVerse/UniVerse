@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
-import dj_database_url  # IMPORTANT: Import this
+import dj_database_url
 
-# Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECRET KEY
@@ -27,7 +26,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -57,9 +56,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'social_media.wsgi.application'
 
-# Database
-if 'RENDER' in os.environ:
-    # Production database (PostgreSQL on Render)
+# Database Configuration
+# Priority: DATABASE_URL (Render) > SQLite (CI/Testing) > MySQL (Local Dev)
+if 'DATABASE_URL' in os.environ:
+    # Production - Render.com with PostgreSQL
     DATABASES = {
         'default': dj_database_url.config(
             default=os.environ.get('DATABASE_URL'),
@@ -67,16 +67,24 @@ if 'RENDER' in os.environ:
             conn_health_checks=True,
         )
     }
+elif 'GITHUB_ACTIONS' in os.environ or 'CI' in os.environ:
+    # CI/CD Environment - Use SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 else:
-    # Local development database (MySQL)
+    # Local Development - MySQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'django_social_media',
-            'USER': 'root',
-            'PASSWORD': '',
-            'HOST': '127.0.0.1',
-            'PORT': '3306',
+            'NAME': os.environ.get('DB_NAME', 'django_social_media'),
+            'USER': os.environ.get('DB_USER', 'root'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+            'PORT': os.environ.get('DB_PORT', '3306'),
             'OPTIONS': {
                 'charset': 'utf8mb4',
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -119,15 +127,14 @@ LOGOUT_REDIRECT_URL = 'login'
 if 'RENDER' in os.environ:
     DEBUG = False
     
-    # Allowed hosts
     RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
     if RENDER_EXTERNAL_HOSTNAME:
         ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     
-    # Static files
+    # Static files with WhiteNoise
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     
-    # Security
+    # Security settings
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
