@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-
+from . import views_tts
 # Try to import AI views, but don't fail if not available
 try:
     from . import views_ai
@@ -97,3 +97,6 @@ if AI_VIEWS_AVAILABLE:
         path('ai/suggestions/', views_ai.ai_suggestions, name='ai_suggestions'),
         path('ai/analyze-image/', views_ai.analyze_image, name='analyze_image'),  # Add this
     ]
+urlpatterns += [
+    path('api/text-to-audio/', views_tts.text_to_speech, name='text_to_audio'),
+]

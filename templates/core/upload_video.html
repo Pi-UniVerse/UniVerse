@@ -386,6 +386,27 @@
         color: var(--text-muted);
         font-weight: 600;
     }
+
+    /* Error Message */
+    .error-message {
+        background: #fee2e2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 1rem;
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+        display: none;
+    }
+
+    .success-message {
+        background: #d1fae5;
+        border: 1px solid #a7f3d0;
+        color: #065f46;
+        padding: 1rem;
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+        display: none;
+    }
     
     /* Responsive */
     @media (max-width: 768px) {
@@ -412,8 +433,14 @@
             <h1 class="upload-title">Upload Video</h1>
             <p class="upload-subtitle">Share your amazing content with the world</p>
         </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage"></div>
         
-        <form method="post" enctype="multipart/form-data" id="uploadForm">
+        <!-- Success Message -->
+        <div class="success-message" id="successMessage"></div>
+        
+        <form method="post" enctype="multipart/form-data" id="uploadForm" action="{% url 'upload_video' %}">
             {% csrf_token %}
             
             <!-- File Upload Area -->
@@ -563,6 +590,12 @@
     const thumbnailPreview = document.getElementById('thumbnailPreview');
     const thumbnailImg = document.getElementById('thumbnailImg');
     const submitBtn = document.getElementById('submitBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const successMessage = document.getElementById('successMessage');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
     
     // Drag and drop
     fileUploadArea.addEventListener('dragover', (e) => {
@@ -590,6 +623,22 @@
     function handleFileSelect() {
         const file = fileInput.files[0];
         if (file) {
+            // Check file size (500MB limit)
+            const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+            if (file.size > maxSize) {
+                showError('File size too large. Maximum size is 500MB.');
+                fileInput.value = '';
+                return;
+            }
+            
+            // Check file type
+            const validTypes = ['video/mp4', 'video/webm', 'video/avi', 'video/quicktime'];
+            if (!validTypes.includes(file.type)) {
+                showError('Invalid file type. Please upload MP4, WebM, or AVI files.');
+                fileInput.value = '';
+                return;
+            }
+            
             fileName.textContent = file.name;
             fileSize.textContent = formatFileSize(file.size);
             
@@ -599,6 +648,7 @@
             fileUploadArea.style.display = 'none';
             filePreview.style.display = 'block';
             submitBtn.disabled = false;
+            hideError();
         }
     }
     
@@ -608,17 +658,27 @@
         fileUploadArea.style.display = 'block';
         filePreview.style.display = 'none';
         submitBtn.disabled = true;
+        hideError();
     }
     
     // Thumbnail handling
     thumbnailInput.addEventListener('change', function() {
         if (this.files && this.files[0]) {
+            const file = this.files[0];
+            // Check if it's an image
+            if (!file.type.startsWith('image/')) {
+                showError('Please select a valid image file for thumbnail.');
+                this.value = '';
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 thumbnailImg.src = e.target.result;
                 thumbnailPreview.style.display = 'block';
+                hideError();
             };
-            reader.readAsDataURL(this.files[0]);
+            reader.readAsDataURL(file);
         }
     });
     
@@ -635,5 +695,96 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
+    }
+    
+    function hideError() {
+        errorMessage.style.display = 'none';
+    }
+    
+    function showSuccess(message) {
+        successMessage.textContent = message;
+        successMessage.style.display = 'block';
+        errorMessage.style.display = 'none';
+    }
+    
+    // Form submission with progress
+    uploadForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            showError('Please select a video file to upload.');
+            return;
+        }
+        
+        // Show progress bar
+        uploadProgress.style.display = 'block';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span>⏳</span><span>Uploading...</span>';
+        
+        // Simulate progress for better UX
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 10;
+            if (progress > 90) progress = 90;
+            progressFill.style.width = progress + '%';
+            progressText.textContent = `Uploading... ${Math.round(progress)}%`;
+        }, 200);
+        
+        // Submit form via AJAX
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => {
+            clearInterval(progressInterval);
+            
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            progressFill.style.width = '100%';
+            progressText.textContent = 'Upload complete!';
+            
+            if (data.success) {
+                showSuccess('Video uploaded successfully! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = data.redirect_url || "{% url 'videos_feed' %}";
+                }, 2000);
+            } else {
+                showError(data.error || 'Upload failed. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>📤</span><span>Upload Video</span>';
+            }
+        })
+        .catch(error => {
+            clearInterval(progressInterval);
+            console.error('Upload error:', error);
+            showError('Upload failed: ' + error.message);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>📤</span><span>Upload Video</span>';
+        });
+    });
+    
+    // Prevent form submission if no file selected
+    uploadForm.addEventListener('submit', function(e) {
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            showError('Please select a video file to upload.');
+        }
+    });
 </script>
 {% endblock %}
