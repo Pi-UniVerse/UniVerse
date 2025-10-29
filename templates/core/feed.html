@@ -572,6 +572,181 @@
 		color: var(--text-muted);
 	}
 
+    /* Styles for TTS section */
+    .tts-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        margin-bottom: 1.5rem;
+    }
+
+    .tts-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .tts-title {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--text-primary);
+    }
+
+    .tts-textarea {
+        width: 100%;
+        padding: 0.875rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        font-family: inherit;
+        font-size: 0.875rem;
+        resize: vertical;
+        min-height: 80px;
+        margin-bottom: 0.75rem;
+        transition: var(--transition);
+    }
+
+    .tts-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .tts-button {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .tts-button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .tts-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .tts-player {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: var(--bg-primary);
+        border-radius: var(--radius);
+        display: none;
+    }
+
+    .tts-player.active {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .tts-audio {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    /* Styles for STT section */
+    .stt-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: 1.25rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+        margin-bottom: 1.5rem;
+    }
+
+    .stt-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .stt-title {
+        font-weight: 700;
+        font-size: 1.125rem;
+        color: var(--text-primary);
+    }
+
+    .stt-textarea {
+        width: 100%;
+        padding: 0.875rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        font-family: inherit;
+        font-size: 0.875rem;
+        resize: vertical;
+        min-height: 80px;
+        margin-bottom: 0.75rem;
+        transition: var(--transition);
+    }
+
+    .stt-textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .stt-button {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: var(--radius);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .stt-button:hover {
+        background: var(--primary-dark);
+        transform: translateY(-1px);
+    }
+
+    .stt-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .loading-spinner {
+        display: none;
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
     
     /* Responsive */
     @media (max-width: 1200px) {
@@ -683,9 +858,15 @@
                         <img src="{{ story_user.latest_story.image.url }}" class="story-avatar" alt="{{ story_user.username }}">
                     {% elif story_user.latest_story.video %}
                         <video src="{{ story_user.latest_story.video.url }}" class="story-avatar" muted></video>
-                    {% else %}
-                        <div class="story-avatar" style="background: {{ story_user.latest_story.background_color }}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; padding: 1rem; text-align: center; font-size: 0.875rem;">
+                    {% elif story_user.latest_story %}
+                        {% with bg_color=story_user.latest_story.background_color|default:"linear-gradient(135deg, #667eea, #764ba2)" %}
+                        <div class="story-avatar" style="background: {{ bg_color }}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; padding: 1rem; text-align: center; font-size: 0.875rem;">
                             {{ story_user.latest_story.caption|truncatewords:3 }}
+                        </div>
+                        {% endwith %}
+                    {% else %}
+                        <div class="story-avatar" style="background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; padding: 1rem; text-align: center; font-size: 0.875rem;">
+                            Story
                         </div>
                     {% endif %}
                     <div class="story-username">{{ story_user.username }}</div>
@@ -772,8 +953,68 @@
         </div>
     </main>
     
-	<!-- RIGHT SIDEBAR - Discover -->
+	<!-- RIGHT SIDEBAR - Discover & TTS -->
 	<aside class="right-sidebar">
+        <!-- Text-to-Speech Section -->
+        <div class="tts-section">
+            <div class="tts-header">
+                <span class="icon">🔊</span>
+                <h3 class="tts-title">Text-to-Speech</h3>
+            </div>
+            
+            <textarea 
+                id="tts-text" 
+                class="tts-textarea" 
+                placeholder="Type your text here to convert to audio..."
+                rows="4"
+            ></textarea>
+            
+            <button id="tts-button" class="tts-button">
+                <span class="button-text">Generate Audio</span>
+                <div class="loading-spinner" id="tts-spinner"></div>
+            </button>
+
+            <div id="tts-player" class="tts-player">
+                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.5rem;">
+                    🔊 Listen:
+                </div>
+                <audio id="tts-audio" controls class="tts-audio">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+
+        <!-- Speech-to-Text Section -->
+        <div class="stt-section">
+            <div class="stt-header">
+                <span class="icon">🎤</span>
+                <h3 class="stt-title">Speech-to-Text</h3>
+            </div>
+            
+            <button id="recordButton" class="stt-button">
+                <span class="button-text">🎤 Start Speaking</span>
+            </button>
+            
+            <div id="recordingStatus" style="display: none; margin: 10px 0; color: var(--primary);">
+                🎤 Listening...
+            </div>
+            
+            <textarea 
+                id="stt-result" 
+                class="stt-textarea" 
+                placeholder="Your text will appear here..."
+                rows="4"
+            ></textarea>
+            
+            <button id="copyButton" class="stt-button" style="margin-top: 10px; display: none;">
+                <span class="button-text">📋 Copy Text</span>
+            </button>
+            
+            <button id="useInPostButton" class="stt-button" style="margin-top: 5px; display: none; background: var(--success);">
+                <span class="button-text">📝 Use in Post</span>
+            </button>
+        </div>
+
 		<!-- Suggested Users -->
 		<div class="discover-card">
 			<div class="discover-header">
@@ -1122,5 +1363,239 @@ document.getElementById('postForm').addEventListener('submit', function(e) {
     submitBtn.innerHTML = '<span>⏳</span><span>Posting...</span>';
 });
 
+// Text-to-Speech Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const ttsButton = document.getElementById('tts-button');
+    const ttsText = document.getElementById('tts-text');
+    const ttsPlayer = document.getElementById('tts-player');
+    const ttsAudio = document.getElementById('tts-audio');
+    const ttsSpinner = document.getElementById('tts-spinner');
+    const buttonText = ttsButton.querySelector('.button-text');
+
+    ttsButton.addEventListener('click', function() {
+        const text = ttsText.value.trim();
+        
+        if (!text) {
+            alert("Please enter text to generate audio!");
+            ttsText.focus();
+            return;
+        }
+
+        // Show loading state
+        ttsButton.disabled = true;
+        buttonText.textContent = 'Generating...';
+        ttsSpinner.style.display = 'block';
+
+        // Send request to TTS API
+        fetch("/api/text-to-audio/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie('csrftoken')
+            },
+            body: JSON.stringify({ text: text })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Error generating audio");
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Create audio URL from blob
+            const audioUrl = URL.createObjectURL(blob);
+            ttsAudio.src = audioUrl;
+            
+            // Show player
+            ttsPlayer.classList.add('active');
+            
+            // Play automatically
+            ttsAudio.play().catch(e => {
+                console.log('Auto-play prevented:', e);
+            });
+        })
+        .catch(error => {
+            console.error('TTS Error:', error);
+            alert("Error generating audio. Please try again.");
+        })
+        .finally(() => {
+            // Reset button state
+            ttsButton.disabled = false;
+            buttonText.textContent = 'Generate Audio';
+            ttsSpinner.style.display = 'none';
+        });
+    });
+
+    // Clear player when text changes
+    ttsText.addEventListener('input', function() {
+        if (ttsPlayer.classList.contains('active')) {
+            ttsPlayer.classList.remove('active');
+            ttsAudio.src = '';
+        }
+    });
+
+    // Handle audio ended event
+    ttsAudio.addEventListener('ended', function() {
+        // Optional: do something when audio ends
+        console.log('Audio playback finished');
+    });
+
+    // Handle audio errors
+    ttsAudio.addEventListener('error', function() {
+        console.error('Audio playback error');
+        alert("Error playing audio.");
+    });
+});
+
+// =============================================
+// SPEECH-TO-TEXT FUNCTIONALITY
+// =============================================
+class SimpleSpeechToText {
+    constructor() {
+        this.recognition = null;
+        this.isListening = false;
+        this.recordButton = document.getElementById('recordButton');
+        this.recordingStatus = document.getElementById('recordingStatus');
+        this.resultTextarea = document.getElementById('stt-result');
+        this.copyButton = document.getElementById('copyButton');
+        this.useInPostButton = document.getElementById('useInPostButton');
+        
+        this.init();
+    }
+    
+    init() {
+        // Check browser compatibility
+        if (!('webkitSpeechRecognition' in window)) {
+            this.recordButton.disabled = true;
+            this.recordButton.innerHTML = '<span class="button-text">❌ Microphone not supported</span>';
+            return;
+        }
+        
+        // Initialize speech recognition
+        this.recognition = new webkitSpeechRecognition();
+        this.recognition.continuous = false;
+        this.recognition.interimResults = true;
+        this.recognition.lang = 'en-US';
+        
+        // Events
+        this.recognition.onstart = () => {
+            this.isListening = true;
+            this.recordButton.innerHTML = '<span class="button-text">⏹️ Stop</span>';
+            this.recordingStatus.style.display = 'block';
+            this.resultTextarea.placeholder = "Speak now...";
+        };
+        
+        this.recognition.onend = () => {
+            this.isListening = false;
+            this.recordButton.innerHTML = '<span class="button-text">🎤 Start Speaking</span>';
+            this.recordingStatus.style.display = 'none';
+        };
+        
+        this.recognition.onresult = (event) => {
+            let finalTranscript = '';
+            let interimTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript;
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            this.resultTextarea.value = finalTranscript || interimTranscript;
+            
+            // Show buttons if text is present
+            if (this.resultTextarea.value.trim()) {
+                this.copyButton.style.display = 'block';
+                this.useInPostButton.style.display = 'block';
+            }
+        };
+        
+        this.recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            if (event.error === 'not-allowed') {
+                this.resultTextarea.value = "Error: Microphone access denied";
+            } else {
+                this.resultTextarea.value = `Error: ${event.error}`;
+            }
+        };
+        
+        // Buttons
+        this.recordButton.addEventListener('click', () => {
+            this.isListening ? this.stopRecording() : this.startRecording();
+        });
+        
+        this.copyButton.addEventListener('click', () => {
+            this.copyToClipboard();
+        });
+        
+        this.useInPostButton.addEventListener('click', () => {
+            this.useInPost();
+        });
+    }
+    
+    startRecording() {
+        try {
+            this.recognition.start();
+        } catch (error) {
+            console.error('Start error:', error);
+        }
+    }
+    
+    stopRecording() {
+        try {
+            this.recognition.stop();
+        } catch (error) {
+            console.error('Stop error:', error);
+        }
+    }
+    
+    copyToClipboard() {
+        this.resultTextarea.select();
+        navigator.clipboard.writeText(this.resultTextarea.value)
+            .then(() => {
+                const originalText = this.copyButton.innerHTML;
+                this.copyButton.innerHTML = '<span class="button-text">✅ Copied!</span>';
+                setTimeout(() => {
+                    this.copyButton.innerHTML = originalText;
+                }, 2000);
+            })
+            .catch(err => {
+                console.error('Copy error:', err);
+            });
+    }
+    
+    useInPost() {
+        const postContent = document.getElementById('postContent');
+        const currentText = postContent.value;
+        const newText = this.resultTextarea.value;
+        
+        if (currentText) {
+            postContent.value = currentText + ' ' + newText;
+        } else {
+            postContent.value = newText;
+        }
+        
+        postContent.focus();
+        
+        // Visual feedback
+        const originalText = this.useInPostButton.innerHTML;
+        this.useInPostButton.innerHTML = '<span class="button-text">✅ Added!</span>';
+        setTimeout(() => {
+            this.useInPostButton.innerHTML = originalText;
+        }, 2000);
+    }
+}
+
+// Initialization
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize speech recognition
+    if (document.getElementById('recordButton')) {
+        new SimpleSpeechToText();
+    }
+});
 </script>
+
 {% endblock %}
